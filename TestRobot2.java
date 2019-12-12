@@ -33,8 +33,8 @@ public class TestRobot2 {
      */
     public static void main(String[] args) throws Exception {
         System.out.println("Creating Robot");        
-        //TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
-        TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);            
+        TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
+        //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);
         try {            
             // Check for connection exception
             robot.run();

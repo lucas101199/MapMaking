@@ -105,7 +105,7 @@ public class RobotCommunication {
 	// map it to a Java Map
 	Map<String, Object> data = mapper.readValue(in, Map.class);
 	r.setData(data);
-
+	System.out.println(data);
 	in.close();
 
 	return r;

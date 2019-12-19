@@ -57,13 +57,11 @@ public class TestRobot2 {
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
         dr.setAngularSpeed(Math.PI * 0.0);
-        dr.setLinearSpeed(1.0);
+        dr.setLinearSpeed(0.4);
 
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
-
-
 
             robotcomm.getResponse(lr);
             createMap(lr); // create an example map
@@ -88,7 +86,7 @@ public class TestRobot2 {
                 // Ask the robot for laser echoes
                 robotcomm.getResponse(ler);
                 double[] echoes = ler.getEchoes();
-                System.out.println("Object at " + echoes[56] + "m in " + angles[56] * 180.0 / Math.PI + " degrees");
+                System.out.println("Object at " + echoes[0] + "m in " + angles[0] * 180.0 / Math.PI + " degrees");
             }
             System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
                     + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
@@ -100,8 +98,6 @@ public class TestRobot2 {
             System.out.println("Laser position (x,y,z): (" + lpos[0] + ", " + lpos[1] + ", " + lpos[2] + ")");
 
         // ask the robot about its position and angle
-
-
 
         // set up request to stop the robot
         dr.setLinearSpeed(0);
@@ -140,7 +136,7 @@ public class TestRobot2 {
         int maxVal = 15;
 
         // Position of the robot in the grid (red dot)
-        double[] position_robot = localizationResponse.getPosition();
+        double[] position_robot = getPosition(localizationResponse);
         int robotRow = (int) Math.round(position_robot[0]);
         int robotCol = (int) Math.round(position_robot[1]);
 

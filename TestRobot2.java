@@ -56,12 +56,12 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.0);
-        dr.setLinearSpeed(0.4);
+        dr.setAngularSpeed(Math.PI * 0.1);
+        dr.setLinearSpeed(0.0);
 
-        System.out.println("Start to move robot");
-        int rc = robotcomm.putRequest(dr);
-        System.out.println("Response code " + rc);
+            System.out.println("Start to move robot");
+            int rc = robotcomm.putRequest(dr);
+            System.out.println("Response code " + rc);
 
             robotcomm.getResponse(lr);
             createMap(lr); // create an example map
@@ -96,6 +96,7 @@ public class TestRobot2 {
             // This is where the laser is mounted on the robot (15cm in front of center)
             double[] lpos = lpr.getPosition();
             System.out.println("Laser position (x,y,z): (" + lpos[0] + ", " + lpos[1] + ", " + lpos[2] + ")");
+
 
         // ask the robot about its position and angle
 
@@ -140,6 +141,8 @@ public class TestRobot2 {
         int robotRow = (int) Math.round(position_robot[0]);
         int robotCol = (int) Math.round(position_robot[1]);
 
+        System.out.println(robotRow);
+        System.out.println(robotCol);
         // Update the grid
         map.updateMap(grid, maxVal, robotRow, robotCol);
     }

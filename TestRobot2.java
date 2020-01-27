@@ -1,13 +1,11 @@
-import java.util.Map;
-
 /**
  * TestRobot interfaces to the (real or virtual) robot over a network
  * connection. It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 ->
  * Lokarria(Robulab) -> Core -> MRDS4
- * 
+ *
  * @author Thomas Johansson, dept. of Computing Science, Umeå University, Umeå,
  *         Sweden Mail: thomasj@cs.umu.se
- * 
+ *
  *         Updated by Ola Ringdahl 2015-03-13, 2015-12-16, 2018-11-23
  */
 public class TestRobot2 {
@@ -15,32 +13,32 @@ public class TestRobot2 {
 
     /**
      * Create a robot connected to host "host" at port "port"
-     * 
+     *
      * @param host
      *            normally http://127.0.0.1
      * @param port
      *            normally 50000
      */
     public TestRobot2(String host, int port) {
-        robotcomm = new RobotCommunication(host, port);  
+        robotcomm = new RobotCommunication(host, port);
     }
     /**
      * This simple main program creates a robot, sets up some speed and turning
      * rate and then displays angle and position for 16 seconds.
-     * 
+     *
      * @param args
      *            not used
      * @throws Exception
      *             not caught
      */
     public static void main(String[] args) throws Exception {
-        System.out.println("Creating Robot");        
+        System.out.println("Creating Robot");
         TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
         //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);
-        try {            
-            // Check for connection exception
+        try {
+            // Check for connection c
             robot.run();
-        }   
+        }
         catch (Exception e) {
             System.out.println(e);
             System.exit(-1);
@@ -56,52 +54,53 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.0);
-        dr.setLinearSpeed(0.4);
+        dr.setAngularSpeed(Math.PI * 0.5);
+        dr.setLinearSpeed(0.3);
 
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
 
-            robotcomm.getResponse(lr);
-            createMap(lr); // create an example map
+        robotcomm.getResponse(lr);
 
-            // Ask for the laser beam angles
-            robotcomm.getResponse(lpr);
 
-            double[] angles = getLaserAngles(lpr);
-            for (int i = 0; i < 10; i++) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                }
+        // Ask for the laser beam angles
+        robotcomm.getResponse(lpr);
 
-                double angle = lr.getHeadingAngle();
-                System.out.println("heading = " + angle);
-
-                double[] position = getPosition(lr);
-
-                System.out.println("position = " + position[0] + ", " + position[1]);
-
-                // Ask the robot for laser echoes
-                robotcomm.getResponse(ler);
-                double[] echoes = ler.getEchoes();
-                System.out.println("Object at " + echoes[0] + "m in " + angles[0] * 180.0 / Math.PI + " degrees");
+        double[] angles = getLaserAngles(lpr);
+        for (int i = 0; i < 10; i++) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
             }
-            System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
-                    + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
-                    + "\nAngle at 268: " + angles[268] * 180.0 / Math.PI + " at 270: " + angles[270] * 180.0 / Math.PI
-                    + " at 270: " + angles[269] * 180.0 / Math.PI);
 
-            // This is where the laser is mounted on the robot (15cm in front of center)
-            double[] lpos = lpr.getPosition();
-            System.out.println("Laser position (x,y,z): (" + lpos[0] + ", " + lpos[1] + ", " + lpos[2] + ")");
+            double angle = lr.getHeadingAngle();
+            System.out.println("heading = " + angle);
+
+            double[] position = getPosition(lr);
+
+            System.out.println("position = " + position[0] + ", " + position[1]);
+
+            // Ask the robot for laser echoes
+            robotcomm.getResponse(ler);
+            double[] echoes = ler.getEchoes();
+            System.out.println("Object at " + echoes[0] + "m in " + angles[0] * 180.0 / Math.PI + " degrees");
+        }
+        System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
+                + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
+                + "\nAngle at 268: " + angles[268] * 180.0 / Math.PI + " at 270: " + angles[270] * 180.0 / Math.PI
+                + " at 270: " + angles[269] * 180.0 / Math.PI);
+
+        // This is where the laser is mounted on the robot (15cm in front of center)
+        double[] lpos = lpr.getPosition();
+        System.out.println("Laser position (x,y,z): (" + lpos[0] + ", " + lpos[1] + ", " + lpos[2] + ")");
 
         // ask the robot about its position and angle
 
         // set up request to stop the robot
         dr.setLinearSpeed(0);
         dr.setAngularSpeed(0);
+        createMap(lr); // create an example map
 
         System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
@@ -119,34 +118,26 @@ public class TestRobot2 {
         boolean showGUI = true; // set this to false if you run in putty
         ShowMap map = new ShowMap(nRows, nCols, showGUI);
         /* Creating a grid with 0.5 */
-        int[][] grid = new int[nRows][nCols];
+        float[][] grid = new float[nRows][nCols];
         for (int i = 0; i < nRows; i++) {
             for (int j = 0; j < nCols; j++) {
-                grid[i][j] = 7;
+                grid[i][j] = (float) 0.4;
             }
         }
-
-        // An explored area (white)
-        for (int rw = 35; rw < 50; rw++) {
-            for (int cl = 32; cl < 55; cl++) {
-                grid[rw][cl] = 0;
-            }
-        }
-        // Max grid value
-        int maxVal = 15;
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
         int robotRow = (int) Math.round(position_robot[0]);
         int robotCol = (int) Math.round(position_robot[1]);
-
+        double tt = getBearingAngle(localizationResponse);
+        System.out.println(" tt = " + tt);
         // Update the grid
-        map.updateMap(grid, maxVal, robotRow, robotCol);
+        map.updateMap(grid, robotRow, robotCol);
     }
 
     /**
      * Extract the robot bearing from the response
-     * 
+     *
      * @param lr
      * @return angle in degrees
      */
@@ -157,7 +148,7 @@ public class TestRobot2 {
 
     /**
      * Extract the position
-     * 
+     *
      * @param lr
      * @return coordinates
      */
@@ -167,7 +158,7 @@ public class TestRobot2 {
 
     /**
      * Get corresponding angles to each laser beam
-     * 
+     *
      * @param lpr
      * @return laser angles in radians
      */

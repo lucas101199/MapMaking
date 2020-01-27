@@ -1,14 +1,11 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Graphics;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 /**
  * ShowMap creates a BufferedImage that show the map and saves it to file every
@@ -122,7 +119,7 @@ public class ShowMap extends JPanel {
 			  c = new Color(value, value, value);
 		    }
 		    // setting pixel color for pixel col and row
-		    map.setRGB(col, row, c.getRGB());
+		    map.setRGB(row, col, c.getRGB());
 		}
 	  }
 	  // drawing a filled red Rectangle for the robot. Rectangle size is

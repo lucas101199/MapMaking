@@ -141,7 +141,8 @@ public class TestRobot2 {
 
         // Draw a line from the robot to where it points
         Graphics g = map.getGraphics();
-        g.drawArc(robotRow, robotCol, 2, 2, 0, (int) heading_angle);
+        g.drawArc(robotRow, robotCol, 2, 40, 0, (int) heading_angle);
+        g.setColor(Color.red);
 
         // Update the grid
         map.updateMap(grid, robotRow, robotCol);

@@ -1,3 +1,5 @@
+import java.awt.*;
+
 /**
  * TestRobot interfaces to the (real or virtual) robot over a network
  * connection. It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 ->
@@ -63,6 +65,7 @@ public class TestRobot2 {
 
         robotcomm.getResponse(lr);
 
+        double angle = 0;
 
         // Ask for the laser beam angles
         robotcomm.getResponse(lpr);
@@ -74,7 +77,7 @@ public class TestRobot2 {
             } catch (InterruptedException ex) {
             }
 
-            double angle = lr.getHeadingAngle();
+            angle = lr.getHeadingAngle();
             System.out.println("heading = " + angle);
 
             double[] position = getPosition(lr);
@@ -100,7 +103,7 @@ public class TestRobot2 {
         // set up request to stop the robot
         dr.setLinearSpeed(0);
         dr.setAngularSpeed(0);
-        createMap(lr); // create an example map
+        createMap(lr, angle); // create an example map
 
         System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
@@ -111,12 +114,16 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
-    private void createMap(LocalizationResponse localizationResponse) {
+    private void createMap(LocalizationResponse localizationResponse, double angle) {
         /* use the same no. of rows and cols in map and grid */
         int nRows = 60;
         int nCols = 65;
         boolean showGUI = true; // set this to false if you run in putty
         ShowMap map = new ShowMap(nRows, nCols, showGUI);
+
+        // Heading angle so we know where the robot is looking and this trajectory
+        double heading_angle = Math.round(angle);
+
         /* Creating a grid with 0.5 */
         float[][] grid = new float[nRows][nCols];
         for (int i = 0; i < nRows; i++) {
@@ -131,6 +138,11 @@ public class TestRobot2 {
         int robotCol = (int) Math.round(position_robot[1]);
         double tt = getBearingAngle(localizationResponse);
         System.out.println(" tt = " + tt);
+
+        // Draw a line from the robot to where it points
+        Graphics g = map.getGraphics();
+        g.drawArc(robotRow, robotCol, 2, 2, 0, (int) heading_angle);
+
         // Update the grid
         map.updateMap(grid, robotRow, robotCol);
     }

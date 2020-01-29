@@ -27,7 +27,7 @@ public class ShowMap extends JPanel {
     // Time for saving the BufferedImage as image
     private int saveImageTime = 5000;
     // Robot size in pixels
-    private int robotSize = 1;
+    private int robotSize = 4;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
 
@@ -128,6 +128,21 @@ public class ShowMap extends JPanel {
 	  g.setColor(Color.RED);
 	  g.fillRect((int) robotRow - robotSize / 2, (int) robotCol - robotSize
 		    / 2, robotSize, robotSize);
+
+	  g.setColor(Color.black);
+	  //create a grid (draw a line every 1O pixels) 1 meter by 1 meter
+		for (int i = 0; i < grid.length; i++){
+			if ((i % 10) == 0 && i != 0) {
+				g.drawLine(0, i, imageWidth, i);
+			}
+		}
+		for (int i = 0; i < grid[0].length; i++) {
+			if ((i % 10) == 0 && i != 0) {
+				g.drawLine(i, 0, i, imageHeight);
+			}
+		}
+
+
 	  // update the gui
 	  this.updateUI();
     }

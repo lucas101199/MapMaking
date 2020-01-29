@@ -1,5 +1,3 @@
-import java.awt.*;
-
 /**
  * TestRobot interfaces to the (real or virtual) robot over a network
  * connection. It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 ->
@@ -56,8 +54,8 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.5);
-        dr.setLinearSpeed(0.3);
+        dr.setAngularSpeed(Math.PI * 0.00);
+        dr.setLinearSpeed(0.00);
 
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
@@ -87,7 +85,7 @@ public class TestRobot2 {
             // Ask the robot for laser echoes
             robotcomm.getResponse(ler);
             double[] echoes = ler.getEchoes();
-            System.out.println("Object at " + echoes[0] + "m in " + angles[0] * 180.0 / Math.PI + " degrees");
+            System.out.println("Object at " + echoes[135] + "m in " + angles[135] * 180.0 / Math.PI + " degrees"); //object in front of the robot
         }
         System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
                 + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
@@ -117,7 +115,7 @@ public class TestRobot2 {
     private void createMap(LocalizationResponse localizationResponse, double angle) {
         /* use the same no. of rows and cols in map and grid */
         int nRows = 60;
-        int nCols = 65;
+        int nCols = 70;
         boolean showGUI = true; // set this to false if you run in putty
         ShowMap map = new ShowMap(nRows, nCols, showGUI);
 
@@ -137,12 +135,14 @@ public class TestRobot2 {
         int robotRow = (int) Math.round(position_robot[0]);
         int robotCol = (int) Math.round(position_robot[1]);
         double tt = getBearingAngle(localizationResponse);
+        double[] position = localizationResponse.getOrientation();
+        double[] pos = localizationResponse.getPosition();
+        System.out.println(position[0] +  " " + position[1] + " " + position[2] + " " + position[3]);
+        System.out.println(pos[0] + " " + pos[1] + " " + pos[2]);
         System.out.println(" tt = " + tt);
 
-        // Draw a line from the robot to where it points
-        Graphics g = map.getGraphics();
-        g.drawArc(robotRow, robotCol, 2, 40, 0, (int) heading_angle);
-        g.setColor(Color.red);
+
+
 
         // Update the grid
         map.updateMap(grid, robotRow, robotCol);

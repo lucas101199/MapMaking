@@ -54,7 +54,7 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.00);
+        dr.setAngularSpeed(Math.PI * 0.015708);
         dr.setLinearSpeed(0.00);
 
         System.out.println("Start to move robot");
@@ -64,7 +64,7 @@ public class TestRobot2 {
         robotcomm.getResponse(lr);
 
         double angle = 0;
-
+        double[] echoes = new double[0];
         // Ask for the laser beam angles
         robotcomm.getResponse(lpr);
 
@@ -84,7 +84,7 @@ public class TestRobot2 {
 
             // Ask the robot for laser echoes
             robotcomm.getResponse(ler);
-            double[] echoes = ler.getEchoes();
+            echoes = ler.getEchoes();
             System.out.println("Object at " + echoes[135] + "m in " + angles[135] * 180.0 / Math.PI + " degrees"); //object in front of the robot
         }
         System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
@@ -101,7 +101,7 @@ public class TestRobot2 {
         // set up request to stop the robot
         dr.setLinearSpeed(0);
         dr.setAngularSpeed(0);
-        createMap(lr, angle); // create an example map
+        createMap(lr, angle, echoes, angles); // create an example map
 
         System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
@@ -112,7 +112,8 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
-    private void createMap(LocalizationResponse localizationResponse, double angle) {
+    private void createMap(LocalizationResponse localizationResponse, double angle,
+                           double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
         int nRows = 60;
         int nCols = 70;
@@ -134,11 +135,10 @@ public class TestRobot2 {
         double[] position_robot = getPosition(localizationResponse);
         int robotRow = (int) Math.round(position_robot[0]);
         int robotCol = (int) Math.round(position_robot[1]);
+        double object = echoes[135]; // object in front of the robot
+
+
         double tt = getBearingAngle(localizationResponse);
-        double[] position = localizationResponse.getOrientation();
-        double[] pos = localizationResponse.getPosition();
-        System.out.println(position[0] +  " " + position[1] + " " + position[2] + " " + position[3]);
-        System.out.println(pos[0] + " " + pos[1] + " " + pos[2]);
         System.out.println(" tt = " + tt);
 
 

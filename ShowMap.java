@@ -142,7 +142,6 @@ public class ShowMap extends JPanel {
 			}
 		}
 
-
 	  // update the gui
 	  this.updateUI();
     }

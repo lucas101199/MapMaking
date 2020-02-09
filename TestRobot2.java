@@ -54,9 +54,8 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.015708);
-        dr.setLinearSpeed(0.00);
-
+        dr.setAngularSpeed(Math.PI * 0.0);
+        dr.setLinearSpeed(0.0);
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
@@ -120,8 +119,6 @@ public class TestRobot2 {
         boolean showGUI = true; // set this to false if you run in putty
         ShowMap map = new ShowMap(nRows, nCols, showGUI);
 
-        // Heading angle so we know where the robot is looking and this trajectory
-        double heading_angle = Math.round(angle);
 
         /* Creating a grid with 0.5 */
         float[][] grid = new float[nRows][nCols];
@@ -133,19 +130,33 @@ public class TestRobot2 {
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
-        int robotRow = (int) Math.round(position_robot[0]);
-        int robotCol = (int) Math.round(position_robot[1]);
-        double object = echoes[135]; // object in front of the robot
+        int robotRow = (int) Math.round(position_robot[0]); //x
+        int robotCol = (int) Math.round(position_robot[1]); //y
 
+        for (int i = 0; i < echoes.length; i++) {
+            double x_end_line = robotRow + (40 * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            double y_end_line = robotCol + (40 * Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
 
-        double tt = getBearingAngle(localizationResponse);
-        System.out.println(" tt = " + tt);
-
-
-
+            if (x_end_line > 0 && y_end_line > 0) {
+                colorGrid(grid, (int) x_end_line, (int) y_end_line);
+            }
+        }
+        double tt = localizationResponse.getHeadingAngle(); //angle in radians
+        System.out.println(" tt = " + tt * (180 / Math.PI));
 
         // Update the grid
-        map.updateMap(grid, robotRow, robotCol);
+        map.updateMap(grid, robotRow, robotCol, echoes, angles);
+    }
+
+    public void colorGrid(float[][] grid, int x, int y) {
+        int x_grid = x/10;
+        int y_grid = y/10;
+
+        for (int row = 0; row < 10; row++) {
+            for (int col = 0; col < 10; col++) {
+                grid[x_grid * 10 + row][y_grid * 10 + col] = (float) 1.0;
+            }
+        }
     }
 
     /**

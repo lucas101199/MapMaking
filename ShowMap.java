@@ -27,7 +27,7 @@ public class ShowMap extends JPanel {
     // Time for saving the BufferedImage as image
     private int saveImageTime = 5000;
     // Robot size in pixels
-    private int robotSize = 4;
+    private int robotSize = 2;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
 
@@ -104,7 +104,7 @@ public class ShowMap extends JPanel {
      *            column in the grid.
      */
     public synchronized void updateMap(float[][] grid, int robotRow,
-		int robotCol) {
+		int robotCol, double[] echoes, double[] angles) {
 	  Color c;
 	  for (int col = 0; col < grid.length; col++) {
 		for (int row = 0; row < grid[0].length; row++) {
@@ -128,7 +128,7 @@ public class ShowMap extends JPanel {
 	  g.setColor(Color.RED);
 	  g.fillRect((int) robotRow - robotSize / 2, (int) robotCol - robotSize
 		    / 2, robotSize, robotSize);
-
+	  this.updateUI();
 	  g.setColor(Color.black);
 	  //create a grid (draw a line every 1O pixels) 1 meter by 1 meter
 		for (int i = 0; i < grid.length; i++){
@@ -141,6 +141,25 @@ public class ShowMap extends JPanel {
 				g.drawLine(i, 0, i, imageHeight);
 			}
 		}
+
+		for (int i = 0; i < echoes.length; i++) {
+			double x_end_line = robotRow + (40 * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
+			double y_end_line = robotCol + (40 * Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+
+			g.setColor(Color.BLUE);
+			g.drawLine((int) x_end_line, (int) y_end_line, (int) x_end_line, (int) y_end_line);
+
+		}
+		// endpoint of the laser echoes
+		double x = robotRow + (echoes[0] * Math.cos(angles[0]));
+		double y = robotCol + (echoes[0] * Math.sin(angles[0]));
+		double x1 = robotRow + (echoes[270] * Math.cos(angles[270]));
+		double y1 = robotCol + (echoes[270] * Math.sin(angles[270]));
+
+		//draw the area where the robot can look
+		g.setColor(Color.red);
+		g.drawLine(robotRow, robotCol, (int) x, (int) y);
+		g.drawLine(robotRow, robotCol, (int) x1, (int) y1);
 
 	  // update the gui
 	  this.updateUI();

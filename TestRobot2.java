@@ -130,15 +130,15 @@ public class TestRobot2 {
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
-        int robotRow = (int) Math.round(position_robot[0]); //x
-        int robotCol = (int) Math.round(position_robot[1]); //y
+        int robotRow = (int) Math.round(position_robot[0]); //y
+        int robotCol = (int) Math.round(position_robot[1]); //x
 
         for (int i = 0; i < echoes.length; i++) {
-            double x_end_line = robotRow + (40 * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
-            double y_end_line = robotCol + (40 * Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
             if (x_end_line > 0 && y_end_line > 0) {
-                colorGrid(grid, (int) x_end_line, (int) y_end_line);
+                colorGrid(grid, (int) x_end_line, (int) y_end_line, 10);
             }
         }
         double tt = localizationResponse.getHeadingAngle(); //angle in radians
@@ -148,15 +148,65 @@ public class TestRobot2 {
         map.updateMap(grid, robotRow, robotCol, echoes, angles);
     }
 
-    public void colorGrid(float[][] grid, int x, int y) {
+    //Color the grid ans divide the cell
+    public void colorGrid(float[][] grid, int x, int y, int scale) {
         int x_grid = x/10;
         int y_grid = y/10;
+        int row = 0;
+        int col = 0;
+        int limit_row = 0;
+        int limit_col = 0;
 
-        for (int row = 0; row < 10; row++) {
-            for (int col = 0; col < 10; col++) {
-                grid[x_grid * 10 + row][y_grid * 10 + col] = (float) 1.0;
+        while (scale >= 5) {
+            int x_10 = x % scale;
+            int y_10 = y % scale;
+
+            int obstacle = WhereIsObstacle(x_10, y_10, scale);
+
+            switch (obstacle) {
+                case 1:
+                    limit_row = row + Math.round(scale / 2);
+                    limit_col = col + Math.round(scale / 2);
+                    break;
+                case 2:
+                    col = col + Math.round(scale / 2);
+                    limit_row = row + Math.round(scale / 2);
+                    limit_col = col + Math.round(scale / 2);
+                    break;
+                case  3:
+                    row = row + Math.round(scale / 2);
+                    limit_row = row + Math.round(scale / 2);
+                    limit_col = col + Math.round(scale / 2);
+                    break;
+                case 4:
+                    row = row + Math.round(scale / 2);
+                    col = col + Math.round(scale / 2);
+                    limit_row = row + Math.round(scale / 2);
+                    limit_col = col + Math.round(scale / 2);
+                    break;
+            }
+            scale = scale / 2;
+        }
+
+        for (int i = col; i < limit_col; i++) {
+            for (int j = row; j < limit_row; j++) {
+                grid[y_grid * 10 + j][x_grid * 10 + i] = (float) 1.0;
             }
         }
+    }
+
+    //Determine where the obstacle is in the cell
+    public int WhereIsObstacle(int x, int y, int scale) {
+        if (x <= (scale / 2) && y <= (scale / 2)) {
+            return 1; //obstacle in Upper left area
+        }
+        if (x >= (scale / 2) && y <= (scale / 2)) {
+            return 2; //obstacle in upper right area
+        }
+        if (x <= (scale / 2) && y >= (scale / 2)) {
+            return 3; //obstacle in bottom left area
+        }
+        return 4; //Otherwise bottom right area
     }
 
     /**

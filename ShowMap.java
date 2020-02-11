@@ -106,12 +106,12 @@ public class ShowMap extends JPanel {
     public synchronized void updateMap(float[][] grid, int robotRow,
 		int robotCol, double[] echoes, double[] angles) {
 	  Color c;
-	  for (int col = 0; col < grid.length; col++) {
-		for (int row = 0; row < grid[0].length; row++) {
-		    float value = grid[col][row];
+	  for (int row = 0; row < grid.length; row++) {
+		for (int col = 0; col < grid[0].length; col++) {
+		    float value = grid[row][col];
 		    // if value is <0 draw a gray pixel
-		    // else mapping the value between 0.0 - 1.0 where 0.0 is black
-		    // and 1.0 is white
+		    // else mapping the value between 0.0 - 1.0 where 1.0 is black
+		    // and 0.0 is white
 		    if (value < 0) {
 			  c = new Color(0.5f, 0.5f, 0.5f);
 		    } else {
@@ -119,14 +119,14 @@ public class ShowMap extends JPanel {
 			  c = new Color(value, value, value);
 		    }
 		    // setting pixel color for pixel col and row
-		    map.setRGB(row, col, c.getRGB());
+		    map.setRGB(col, row, c.getRGB());
 		}
 	  }
 	  // drawing a filled red Rectangle for the robot. Rectangle size is
 	  // 6x6
 	  Graphics g = map.getGraphics();
 	  g.setColor(Color.RED);
-	  g.fillRect((int) robotRow - robotSize / 2, (int) robotCol - robotSize
+	  g.fillRect((int) robotCol - robotSize / 2, (int) robotRow - robotSize
 		    / 2, robotSize, robotSize);
 	  this.updateUI();
 	  g.setColor(Color.black);
@@ -143,23 +143,16 @@ public class ShowMap extends JPanel {
 		}
 
 		for (int i = 0; i < echoes.length; i++) {
-			double x_end_line = robotRow + (40 * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
-			double y_end_line = robotCol + (40 * Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+			double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+			double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
-			g.setColor(Color.BLUE);
+			if (i < 135) {
+				g.setColor(Color.PINK);
+			} else {
+				g.setColor(Color.BLUE);
+			}
 			g.drawLine((int) x_end_line, (int) y_end_line, (int) x_end_line, (int) y_end_line);
-
 		}
-		// endpoint of the laser echoes
-		double x = robotRow + (echoes[0] * Math.cos(angles[0]));
-		double y = robotCol + (echoes[0] * Math.sin(angles[0]));
-		double x1 = robotRow + (echoes[270] * Math.cos(angles[270]));
-		double y1 = robotCol + (echoes[270] * Math.sin(angles[270]));
-
-		//draw the area where the robot can look
-		g.setColor(Color.red);
-		g.drawLine(robotRow, robotCol, (int) x, (int) y);
-		g.drawLine(robotRow, robotCol, (int) x1, (int) y1);
 
 	  // update the gui
 	  this.updateUI();

@@ -31,7 +31,7 @@ public class TestRobot2 {
      * @throws Exception
      *             not caught
      */
-    public static void main(String[] args) throws Exception {
+    public static void testrobot2(String[] args) throws Exception {
         System.out.println("Creating Robot");        
         TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
         //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);

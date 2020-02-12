@@ -1,3 +1,4 @@
+
 /**
  * RobotMain tests the Robot class
  * It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 -> Lokarria(Robulab) -> Core -> MRDS4
@@ -5,6 +6,7 @@
  * @author thomasj
  * @date 2019-08-29
  */
+/*
 public class RobotMain {
     public static double FINAL_DISTANCE = 0.2;
     public static RobotMain main;
@@ -14,7 +16,7 @@ public class RobotMain {
     public double lookDistance = 1.5; //1 is safe, 1.5 rather risky, below 0.5 does not work
     public Path path;
 
-    public static void main(String[] args) throws Exception {
+    public static void sampletext(String[] args) throws Exception {
         main = new RobotMain("http://127.0.0.1", 50000);
         main.run();
     }
@@ -108,3 +110,4 @@ public class RobotMain {
         System.out.println();
     }
 }
+*/

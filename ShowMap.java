@@ -1,14 +1,11 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Graphics;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 
 /**
  * ShowMap creates a BufferedImage that show the map and saves it to file every
@@ -30,9 +27,11 @@ public class ShowMap extends JPanel {
     // Time for saving the BufferedImage as image
     private int saveImageTime = 5000;
     // Robot size in pixels
-    private int robotSize = 1;
+    private int robotSize = 2;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
+    private double cell_size = 0.2; //20cm
+	private int x_min, y_min, x_max, y_max;
 
     /**
      * Constructor for ShowMap
@@ -45,7 +44,7 @@ public class ShowMap extends JPanel {
      *            if false, no map will be shown on screen. Good if you are
      *            using Putty for example
      */
-    public ShowMap(int gridHeight, int gridWidth, boolean showGUI) {
+    public ShowMap(int gridHeight, int gridWidth, boolean showGUI, int[] coord) {
 	  super(true);
 	  this.showGUI = showGUI;
 	  imageHeight = scale * gridHeight;
@@ -66,6 +65,10 @@ public class ShowMap extends JPanel {
 		this.updateUI();
 		frame.setVisible(showGUI);
 	  }
+		x_min = coord[0];
+		y_min = coord[1];
+		x_max = coord[2];
+		y_max = coord[3];
 
 	  // creating a gray BufferedImage
 	  map = new BufferedImage(gridWidth, gridHeight, BufferedImage.TYPE_INT_RGB);
@@ -107,14 +110,14 @@ public class ShowMap extends JPanel {
      *            column in the grid.
      */
     public synchronized void updateMap(float[][] grid, int robotRow,
-		int robotCol) {
+		int robotCol, double[] echoes, double[] angles) {
 	  Color c;
-	  for (int col = 0; col < grid.length; col++) {
-		for (int row = 0; row < grid[0].length; row++) {
-		    float value = grid[col][row];
+	  for (int row = 0; row < grid.length; row++) {
+		for (int col = 0; col < grid[0].length; col++) {
+		    float value = grid[row][col];
 		    // if value is <0 draw a gray pixel
-		    // else mapping the value between 0.0 - 1.0 where 0.0 is black
-		    // and 1.0 is white
+		    // else mapping the value between 0.0 - 1.0 where 1.0 is black
+		    // and 0.0 is white
 		    if (value < 0) {
 			  c = new Color(0.5f, 0.5f, 0.5f);
 		    } else {
@@ -125,12 +128,39 @@ public class ShowMap extends JPanel {
 		    map.setRGB(col, row, c.getRGB());
 		}
 	  }
+
+	  //get the position of the robot in the grid
+		int[] position_robot = xy_to_rc(robotCol, robotRow);
+
 	  // drawing a filled red Rectangle for the robot. Rectangle size is
-	  // 6x6
+	  // 5x5
 	  Graphics g = map.getGraphics();
 	  g.setColor(Color.RED);
-	  g.fillRect((int) robotRow - robotSize / 2, (int) robotCol - robotSize
-		    / 2, robotSize, robotSize);
+	  g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
+	  this.updateUI();
+
+	  g.setColor(Color.black);
+	  //create a grid (draw a line every 5 pixels) 1 meter by 1 meter
+		for (int i = 0; i < grid.length; i++){
+			if ((i % 5) == 0 && i != 0) {
+				g.drawLine(0, i, imageWidth, i);
+			}
+		}
+		for (int i = 0; i < grid[0].length; i++) {
+			if ((i % 5) == 0 && i != 0) {
+				g.drawLine(i, 0, i, imageHeight);
+			}
+		}
+
+		for (int i = 0; i < echoes.length; i++) {
+			double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
+			double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
+
+			int[] obstacle = xy_to_rc(x_end_line, y_end_line);
+			g.setColor(Color.BLUE);
+			g.drawLine(obstacle[0], obstacle[1], obstacle[0], obstacle[1]);
+		}
+
 	  // update the gui
 	  this.updateUI();
     }
@@ -219,4 +249,9 @@ public class ShowMap extends JPanel {
 	  g.dispose();
     }
 
+    public int[] xy_to_rc(double x, double y) {
+    	int col = (int) ((x - x_min) / cell_size);
+    	int row = (int) ((y - y_min) / cell_size);
+		return new int[]{col,row};
+	}
 }

@@ -1,3 +1,5 @@
+import java.awt.*;
+
 /**
  * RobotMain tests the Robot class
  * It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 -> Lokarria(Robulab) -> Core -> MRDS4
@@ -5,6 +7,7 @@
  * @author thomasj
  * @date 2019-08-29
  */
+/*
 public class RobotMain {
     public static double FINAL_DISTANCE = 0.2;
     public static RobotMain main;
@@ -107,4 +110,4 @@ public class RobotMain {
         }
         System.out.println();
     }
-}
+}*/

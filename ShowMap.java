@@ -140,17 +140,6 @@ public class ShowMap extends JPanel {
 	  this.updateUI();
 
 	  g.setColor(Color.black);
-	  //create a grid (draw a line every 5 pixels) 1 meter by 1 meter
-		for (int i = 0; i < grid.length; i++){
-			if ((i % 5) == 0 && i != 0) {
-				g.drawLine(0, i, imageWidth, i);
-			}
-		}
-		for (int i = 0; i < grid[0].length; i++) {
-			if ((i % 5) == 0 && i != 0) {
-				g.drawLine(i, 0, i, imageHeight);
-			}
-		}
 
 		for (int i = 0; i < echoes.length; i++) {
 			double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))

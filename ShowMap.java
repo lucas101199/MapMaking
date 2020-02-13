@@ -30,6 +30,8 @@ public class ShowMap extends JPanel {
     private int robotSize = 2;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
+    private double cell_size = 0.2; //20cm
+	private int x_min, y_min, x_max, y_max;
 
     /**
      * Constructor for ShowMap
@@ -42,7 +44,7 @@ public class ShowMap extends JPanel {
      *            if false, no map will be shown on screen. Good if you are
      *            using Putty for example
      */
-    public ShowMap(int gridHeight, int gridWidth, boolean showGUI) {
+    public ShowMap(int gridHeight, int gridWidth, boolean showGUI, int[] coord) {
 	  super(true);
 	  this.showGUI = showGUI;
 	  imageHeight = scale * gridHeight;
@@ -63,6 +65,10 @@ public class ShowMap extends JPanel {
 		this.updateUI();
 		frame.setVisible(showGUI);
 	  }
+		x_min = coord[0];
+		y_min = coord[1];
+		x_max = coord[2];
+		y_max = coord[3];
 
 	  // creating a gray BufferedImage
 	  map = new BufferedImage(gridWidth, gridHeight, BufferedImage.TYPE_INT_RGB);
@@ -122,22 +128,26 @@ public class ShowMap extends JPanel {
 		    map.setRGB(col, row, c.getRGB());
 		}
 	  }
+
+	  //get the position of the robot in the grid
+		int[] position_robot = xy_to_rc(robotCol, robotRow);
+
 	  // drawing a filled red Rectangle for the robot. Rectangle size is
-	  // 6x6
+	  // 5x5
 	  Graphics g = map.getGraphics();
 	  g.setColor(Color.RED);
-	  g.fillRect((int) robotCol - robotSize / 2, (int) robotRow - robotSize
-		    / 2, robotSize, robotSize);
+	  g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
 	  this.updateUI();
+
 	  g.setColor(Color.black);
-	  //create a grid (draw a line every 1O pixels) 1 meter by 1 meter
+	  //create a grid (draw a line every 5 pixels) 1 meter by 1 meter
 		for (int i = 0; i < grid.length; i++){
-			if ((i % 10) == 0 && i != 0) {
+			if ((i % 5) == 0 && i != 0) {
 				g.drawLine(0, i, imageWidth, i);
 			}
 		}
 		for (int i = 0; i < grid[0].length; i++) {
-			if ((i % 10) == 0 && i != 0) {
+			if ((i % 5) == 0 && i != 0) {
 				g.drawLine(i, 0, i, imageHeight);
 			}
 		}
@@ -146,12 +156,9 @@ public class ShowMap extends JPanel {
 			double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
 			double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
-			if (i < 135) {
-				g.setColor(Color.PINK);
-			} else {
-				g.setColor(Color.BLUE);
-			}
-			g.drawLine((int) x_end_line, (int) y_end_line, (int) x_end_line, (int) y_end_line);
+			int[] obstacle = xy_to_rc(x_end_line, y_end_line);
+			g.setColor(Color.BLUE);
+			g.drawLine(obstacle[0], obstacle[1], obstacle[0], obstacle[1]);
 		}
 
 	  // update the gui
@@ -242,4 +249,9 @@ public class ShowMap extends JPanel {
 	  g.dispose();
     }
 
+    public int[] xy_to_rc(double x, double y) {
+    	int col = (int) ((x - x_min) / cell_size);
+    	int row = (int) ((y - y_min) / cell_size);
+		return new int[]{col,row};
+	}
 }

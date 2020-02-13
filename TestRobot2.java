@@ -9,7 +9,13 @@
  *         Updated by Ola Ringdahl 2015-03-13, 2015-12-16, 2018-11-23
  */
 public class TestRobot2 {
+
     private RobotCommunication robotcomm; // communication drivers
+    public static int x_min;
+    public static int y_min;
+    public static int x_max;
+    public static int y_max;
+    public static int[] coord;
 
     /**
      * Create a robot connected to host "host" at port "port"
@@ -34,7 +40,13 @@ public class TestRobot2 {
     public static void main(String[] args) throws Exception {
         System.out.println("Creating Robot");
         TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
-        //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);
+        //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);*
+        x_min = -30;
+        y_min = -40;
+        x_max = 40;
+        y_max = 20;
+        coord = new int[]{x_min, y_min, x_max, y_max};
+
         try {
             // Check for connection c
             robot.run();
@@ -114,15 +126,15 @@ public class TestRobot2 {
     private void createMap(LocalizationResponse localizationResponse, double angle,
                            double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
-        int nRows = 60;
-        int nCols = 70;
-        boolean showGUI = true; // set this to false if you run in putty
-        ShowMap map = new ShowMap(nRows, nCols, showGUI);
+        int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
+        int nRows = (int) (Math.abs(y_max - y_min) / 0.2);
 
+        boolean showGUI = true; // set this to false if you run in putty
+        ShowMap map = new ShowMap(nRows, nCols, showGUI, coord);
 
         /* Creating a grid with 0.5 */
         float[][] grid = new float[nRows][nCols];
-        for (int i = 0; i < nRows; i++) {
+        for (int i = nRows - 1; i > 0; i--) {
             for (int j = 0; j < nCols; j++) {
                 grid[i][j] = (float) 0.4;
             }
@@ -130,17 +142,19 @@ public class TestRobot2 {
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
-        int robotRow = (int) Math.round(position_robot[0]); //y
-        int robotCol = (int) Math.round(position_robot[1]); //x
+        int robotCol = (int) Math.round(position_robot[0]); //y
+        int robotRow = (int) Math.round(position_robot[1]); //x
 
         for (int i = 0; i < echoes.length; i++) {
             double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
             double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
-            if (x_end_line > 0 && y_end_line > 0) {
-                colorGrid(grid, (int) x_end_line, (int) y_end_line, 10);
+            int[] obstacle = map.xy_to_rc(x_end_line, y_end_line);
+            if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
+                colorGrid(grid, obstacle[0], obstacle[1]);
             }
         }
+
         double tt = localizationResponse.getHeadingAngle(); //angle in radians
         System.out.println(" tt = " + tt * (180 / Math.PI));
 
@@ -148,49 +162,14 @@ public class TestRobot2 {
         map.updateMap(grid, robotRow, robotCol, echoes, angles);
     }
 
-    //Color the grid ans divide the cell
-    public void colorGrid(float[][] grid, int x, int y, int scale) {
-        int x_grid = x/10;
-        int y_grid = y/10;
-        int row = 0;
-        int col = 0;
-        int limit_row = 0;
-        int limit_col = 0;
+    //Color the grid
+    public void colorGrid(float[][] grid, int x, int y) {
+        int x_cell = x / 5;
+        int y_cell = y / 5;
 
-        while (scale >= 5) {
-            int x_10 = x % scale;
-            int y_10 = y % scale;
-
-            int obstacle = WhereIsObstacle(x_10, y_10, scale);
-
-            switch (obstacle) {
-                case 1:
-                    limit_row = row + Math.round(scale / 2);
-                    limit_col = col + Math.round(scale / 2);
-                    break;
-                case 2:
-                    col = col + Math.round(scale / 2);
-                    limit_row = row + Math.round(scale / 2);
-                    limit_col = col + Math.round(scale / 2);
-                    break;
-                case  3:
-                    row = row + Math.round(scale / 2);
-                    limit_row = row + Math.round(scale / 2);
-                    limit_col = col + Math.round(scale / 2);
-                    break;
-                case 4:
-                    row = row + Math.round(scale / 2);
-                    col = col + Math.round(scale / 2);
-                    limit_row = row + Math.round(scale / 2);
-                    limit_col = col + Math.round(scale / 2);
-                    break;
-            }
-            scale = scale / 2;
-        }
-
-        for (int i = col; i < limit_col; i++) {
-            for (int j = row; j < limit_row; j++) {
-                grid[y_grid * 10 + j][x_grid * 10 + i] = (float) 1.0;
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 5; j++) {
+                grid[y_cell * 5 + j][x_cell * 5 + i] = (float) 1.0;
             }
         }
     }
@@ -248,4 +227,6 @@ public class TestRobot2 {
         }
         return angles;
     }
+
+
 }

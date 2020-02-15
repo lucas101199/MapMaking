@@ -47,14 +47,15 @@ public class TestRobot2 {
         y_max = 20;
         coord = new int[]{x_min, y_min, x_max, y_max};
 
-        try {
+        robot.run();
+        /*try {
             // Check for connection c
             robot.run();
         }
         catch (Exception e) {
             System.out.println(e);
             System.exit(-1);
-        }
+        }*/
     }
 
     private void run() throws Exception {
@@ -67,20 +68,54 @@ public class TestRobot2 {
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
         dr.setAngularSpeed(Math.PI * 0.0);
-        dr.setLinearSpeed(0.0);
+        dr.setLinearSpeed(0.5);
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
 
-        robotcomm.getResponse(lr);
+        for (int i = 0; i < 10; i++) {
+            robotcomm.getResponse(lr);
+            double[] pos = lr.getPosition();
+            System.out.println("X Cor: " + pos[0]);
+            System.out.println("Y Cor: " + pos[1]);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+            }
+        }
+        dr.setAngularSpeed(Math.PI * 0.0);
+        dr.setLinearSpeed(0.0);
+        robotcomm.putRequest(dr);
+
+        /*robotcomm.getResponse(lr);
 
         double angle = 0;
         double[] echoes = new double[0];
         // Ask for the laser beam angles
         robotcomm.getResponse(lpr);
 
+        robotcomm.getResponse(ler);
         double[] angles = getLaserAngles(lpr);
-        for (int i = 0; i < 10; i++) {
+        angle = lr.getHeadingAngle();
+        echoes = ler.getEchoes();
+
+        float[][] grid = createMap(lr, angle, echoes, angles); // create an example map
+
+        //Compute A Path
+        double [] rob_pos = lr.getPosition();
+        System.out.println("X Coordinate: " + rob_pos[0]);
+        System.out.println("Y Coordinate: " + rob_pos[1]);
+        Point start = new Point(rob_pos);
+        Point goal = new Point(rob_pos[0] + 20, rob_pos[1]);
+        Pathfinder scout = new Pathfinder(0.2, 0.2, grid);
+        Path path = scout.findPath(start, goal, grid);
+
+        //Follow the Path
+        PathFollower follower = new PathFollower(path);
+        follower.run();*/
+
+
+        /*for (int i = 0; i < 10; i++) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
@@ -97,8 +132,8 @@ public class TestRobot2 {
             robotcomm.getResponse(ler);
             echoes = ler.getEchoes();
             System.out.println("Object at " + echoes[135] + "m in " + angles[135] * 180.0 / Math.PI + " degrees"); //object in front of the robot
-        }
-        System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
+        }*/
+        /*System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
                 + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
                 + "\nAngle at 268: " + angles[268] * 180.0 / Math.PI + " at 270: " + angles[270] * 180.0 / Math.PI
                 + " at 270: " + angles[269] * 180.0 / Math.PI);
@@ -111,8 +146,8 @@ public class TestRobot2 {
 
         // set up request to stop the robot
         dr.setLinearSpeed(0);
-        dr.setAngularSpeed(0);
-        createMap(lr, angle, echoes, angles); // create an example map
+        dr.setAngularSpeed(0);*/
+
 
         System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
@@ -123,7 +158,7 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
-    private void createMap(LocalizationResponse localizationResponse, double angle,
+    private float[][] createMap(LocalizationResponse localizationResponse, double angle,
                            double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
@@ -160,6 +195,7 @@ public class TestRobot2 {
 
         // Update the grid
         map.updateMap(grid, robotRow, robotCol, echoes, angles);
+        return grid;
     }
 
     //Color the grid

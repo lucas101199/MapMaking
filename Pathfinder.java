@@ -8,9 +8,9 @@ public class Pathfinder {
     private HeatmapTile[][] heatMap;
     private double tileWidth;
     private double tileHeight;
-    private static double occupied = 0.5;
+    private static float occupied = 0.4f;
 
-    public Pathfinder(double width, double height, double[][] map) {
+    public Pathfinder(double width, double height, float[][] map) {
         this.tileWidth = width;
         this.tileHeight = height;
         this.heatMap = new HeatmapTile[map.length][map[0].length];
@@ -21,7 +21,7 @@ public class Pathfinder {
         }
     }
 
-    public Path findPath(Point start, Point goal, double[][] map) {
+    public Path findPath(Point start, Point goal, float[][] map) {
         resetHeatmap(map);
         heatWave(start, goal, map);
         if (heatMap[x2Grid(goal.getX())][y2Grid(goal.getY())].getChecked()) {
@@ -32,7 +32,7 @@ public class Pathfinder {
     }
 
     //Resets grids of the Heatmap to their initial values
-    private void resetHeatmap(double[][] map) {
+    private void resetHeatmap(float[][] map) {
         for (int i = 0; i < map.length; i++ ) {
             for (int j = 0; j < map[0].length; j++) {
                 heatMap[i][j].reset();
@@ -40,7 +40,7 @@ public class Pathfinder {
         }
     }
 
-    private void heatWave(Point s, Point g, double[][] map) {
+    private void heatWave(Point s, Point g, float[][] map) {
         Queue<HeatmapTile> waveFront = new LinkedList<>();
 
         //Setting tile from the start point on checked and adding it to the queue
@@ -113,7 +113,7 @@ public class Pathfinder {
         return (row * tileHeight + (tileHeight / 2));
     }
 
-    private void expandWavefront(Queue<HeatmapTile> waveFront, double[][] map, int x, int y) {
+    private void expandWavefront(Queue<HeatmapTile> waveFront, float[][] map, int x, int y) {
         //Check North
         if ((y + 1) < map[0].length) {
             if ((!heatMap[x][y + 1].getChecked()) && (map[x][y + 1] < occupied)) {

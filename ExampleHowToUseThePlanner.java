@@ -3,7 +3,7 @@ import java.awt.print.Printable;
 public class ExampleHowToUseThePlanner {
     public static void example() {
         //Example map and start and goal point
-        double[][] map = {
+        float[][] map = {
                 {0, 0, 0, 0, 0},
                 {1, 1, 0, 0, 1},
                 {0, 0, 1, 0, 1},

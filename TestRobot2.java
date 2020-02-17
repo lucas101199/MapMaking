@@ -227,6 +227,4 @@ public class TestRobot2 {
         }
         return angles;
     }
-
-
 }

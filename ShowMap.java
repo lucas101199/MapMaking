@@ -140,7 +140,7 @@ public class ShowMap extends JPanel {
         g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
         this.updateUI();
 
-        bresenham
+        
         LinkedList<Point> visited_point = new LinkedList<>();
 
         for (int i = 0; i < echoes.length; i++) {

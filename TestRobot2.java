@@ -66,13 +66,14 @@ public class TestRobot2 {
 
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
+
         // set up the request to move in a circle
         dr.setAngularSpeed(Math.PI * 0.0);
-        dr.setLinearSpeed(0.5);
+        dr.setLinearSpeed(0.0);
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
-
+/*
         for (int i = 0; i < 10; i++) {
             robotcomm.getResponse(lr);
             double[] pos = lr.getPosition();
@@ -83,36 +84,74 @@ public class TestRobot2 {
             } catch (InterruptedException ex) {
             }
         }
+*/
+
+/*
         dr.setAngularSpeed(Math.PI * 0.0);
         dr.setLinearSpeed(0.0);
         robotcomm.putRequest(dr);
+*/
 
-        /*robotcomm.getResponse(lr);
-
+/*
         double angle = 0;
         double[] echoes = new double[0];
-        // Ask for the laser beam angles
-        robotcomm.getResponse(lpr);
+        int i = 0;
+        while (i < 10000) {
+            // Ask for the laser beam angles
+            robotcomm.getResponse(lpr);
+            robotcomm.getResponse(lr);
+            robotcomm.getResponse(ler);
+            double[] angles = getLaserAngles(lpr);
+            angle = lr.getHeadingAngle();
+            echoes = ler.getEchoes();
+            float[][] grid = createMap(lr, angle, echoes, angles); // create an example map
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+            }
+            i++;
+        }
+*/
 
+        // Ask for the laser beam angles
+        double angle = 0;
+        double[] echoes = new double[0];
+        robotcomm.getResponse(lpr);
+        robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
         double[] angles = getLaserAngles(lpr);
         angle = lr.getHeadingAngle();
         echoes = ler.getEchoes();
-
         float[][] grid = createMap(lr, angle, echoes, angles); // create an example map
 
-        //Compute A Path
-        double [] rob_pos = lr.getPosition();
-        System.out.println("X Coordinate: " + rob_pos[0]);
-        System.out.println("Y Coordinate: " + rob_pos[1]);
-        Point start = new Point(rob_pos);
-        Point goal = new Point(rob_pos[0] + 20, rob_pos[1]);
-        Pathfinder scout = new Pathfinder(0.2, 0.2, grid);
-        Path path = scout.findPath(start, goal, grid);
+        //for (int i = grid.length - 1; i >= 0; i--) {
+        //    System.out.print("Y = " + i + "  ");
+        //    for (int j = 0; j < grid[0].length; j++) {
+        //        System.out.print("X = " + j + " " + grid[i][j] +  "  ");
+        //    }
+        //    System.out.print("\n");
+        //}
 
-        //Follow the Path
-        PathFollower follower = new PathFollower(path);
-        follower.run();*/
+        //Compute A Path
+        //double [] rob_pos = lr.getPosition();
+        //double[] rob_pos_grid = new double[2];
+        //rob_pos_grid[0] = rob_pos[0] + Math.abs(x_min);
+        //rob_pos_grid[1] = rob_pos[1] + Math.abs(y_min);
+        ////System.out.println("X Coordinate: " + rob_pos[0]);
+        ////System.out.println("Y Coordinate: " + rob_pos[1]);
+        //System.out.println("X Coordinate with offset: " + rob_pos_grid[0]);
+        //System.out.println("Y Coordinate with offset: " + rob_pos_grid[1]);
+        //Point start = new Point(rob_pos_grid);
+        ////System.out.println("rob_pos_grid[0]: " + rob_pos_grid[0] + " " + rob_pos_grid[1]);
+        //Point goal = new Point(rob_pos_grid[0] + 10.0, rob_pos_grid[1]);
+        //Pathfinder scout = new Pathfinder(0.2, 0.2, (double)x_min, (double)y_min, grid);
+        //Path path = scout.findPath(start, grid);
+        //System.out.println("Pathlength: " + path.path.length);
+        ////Follow the Path
+        //PathFollower follower = new PathFollower(path);
+        //System.out.print("Pathfollowing begins");
+        //follower.run();
+
 
 
         /*for (int i = 0; i < 10; i++) {
@@ -162,6 +201,7 @@ public class TestRobot2 {
                            double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
+        System.out.println("nCols: " + nCols);
         int nRows = (int) (Math.abs(y_max - y_min) / 0.2);
 
         boolean showGUI = true; // set this to false if you run in putty
@@ -169,32 +209,43 @@ public class TestRobot2 {
 
         /* Creating a grid with 0.5 */
         float[][] grid = new float[nRows][nCols];
-        for (int i = nRows - 1; i > 0; i--) {
+        float[][] image_grid = new float[nRows][nCols];
+        for (int i = nRows - 1; i >= 0; i--) {
             for (int j = 0; j < nCols; j++) {
                 grid[i][j] = (float) 0.4;
+                image_grid[i][j] = (float) 0.4;
             }
         }
+
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
         int robotCol = (int) Math.round(position_robot[0]); //y
         int robotRow = (int) Math.round(position_robot[1]); //x
 
+        double tt = localizationResponse.getHeadingAngle(); //angle in radians
+
         for (int i = 0; i < echoes.length; i++) {
-            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
-            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            double y_end_line = robotRow + (echoes[i] * Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle))
+            double y_end_line_image = robotRow + (echoes[i] * -Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle))
+            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i] + tt)); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
             int[] obstacle = map.xy_to_rc(x_end_line, y_end_line);
+            int[] obstacle_image = map.xy_to_rc(x_end_line, y_end_line_image);
             if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
                 colorGrid(grid, obstacle[0], obstacle[1]);
             }
+            if (x_end_line > x_min && x_end_line < x_max && y_end_line_image > y_min && y_end_line_image < y_max) {
+                colorGrid(image_grid, obstacle_image[0], obstacle_image[1]);
+            }
         }
 
-        double tt = localizationResponse.getHeadingAngle(); //angle in radians
+
         System.out.println(" tt = " + tt * (180 / Math.PI));
 
         // Update the grid
-        map.updateMap(grid, robotRow, robotCol, echoes, angles);
+        map.updateMap(image_grid, robotRow, robotCol, echoes, angles);
+        System.out.println("grid x length: " + grid[0].length);
         return grid;
     }
 

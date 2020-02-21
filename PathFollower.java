@@ -13,10 +13,9 @@ public class PathFollower {
     }
 
     void run() throws Exception {
-        System.out.println(path.nextPoint);
         comm.getResponse(locResponse);
         pos = getPosition();
-        while (!path.pathFinished() || path.getNextPoint().getDistance(pos) < FINAL_DISTANCE) {
+        while ( (!path.pathFinished()) || (path.getNextPoint().getDistance(pos) < FINAL_DISTANCE) ) {
             step();
             sleep(30);
         }
@@ -28,6 +27,7 @@ public class PathFollower {
         comm.getResponse(locResponse);
         pos = getPosition();
         Point goalPoint = path.getGoalPoint(pos,lookDistance);
+        System.out.println("Goalpoint X: " + goalPoint.getX() + "  Y: " + goalPoint.getY());
         double curvature = getCurvature(goalPoint, pos);
         driveRequest.setLinearSpeed(speed);
         driveRequest.setAngularSpeed(speed*curvature);

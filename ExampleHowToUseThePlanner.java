@@ -19,7 +19,7 @@ public class ExampleHowToUseThePlanner {
         //Creating a new Pathfinder. First parameter is the width of a grid field in meter.
         //Second parameter is the height of a grid field in meter
         //Third parameter is the recent map
-        Pathfinder scout = new Pathfinder(1.0, 1.0, map);
+        Pathfinder scout = new Pathfinder(1.0, 1.0, -30.0, -20.0, map);
 
         //findPath plans a new path, which then can be followed by the PathFollower.
         //First parameter is the recent position of the robot

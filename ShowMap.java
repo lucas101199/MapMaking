@@ -33,8 +33,7 @@ public class ShowMap extends JPanel {
     private boolean showGUI = true;
     private double cell_size = 0.2; //20cm
     private int x_min, y_min, x_max, y_max;
-    private float p_occupied = (float) 0.5;
-    private float p_empty = (float) 0.5;
+    private float p_occupied, p_empty = (float) 0.5;
 
     /**
      * Constructor for ShowMap
@@ -262,10 +261,15 @@ public class ShowMap extends JPanel {
      * @param rayon
      *            distance from the robot to the cell
      * @return p_empty
-     *            probability that the cell is empty
+     *            probability that the cell is empty in region II
      *
      */
     public float Bayes(int rayon) {
-        return (float) ((40-rayon) / 40 + 1) / 2;
+        float p_empty_bayes = (float) ((40-rayon) / 40 + 1) / 2;
+        return 1 - p_empty_bayes;
+    }
+
+    public float Occupancy_probability(float p_occupied_bayes)  {
+        return p_occupied_bayes * p_occupied / (p_occupied_bayes * p_occupied) + (1 - p_occupied_bayes) * p_empty);
     }
 }

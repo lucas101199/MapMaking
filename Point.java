@@ -5,6 +5,7 @@
 public class Point
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
    public double x, y;
 
    public Point(double pos[])
@@ -45,6 +46,8 @@ public class Point
       return "x="+x+", y="+y;
    }
 =======
+=======
+>>>>>>> c21d22ef66e19976f847e9701143c05c9736e3ff
     public double x, y;
 
     public Point(double pos[])
@@ -80,5 +83,8 @@ public class Point
     public String toString() {
         return "x="+x+", y="+y;
     }
+<<<<<<< HEAD
+>>>>>>> c21d22ef66e19976f847e9701143c05c9736e3ff
+=======
 >>>>>>> c21d22ef66e19976f847e9701143c05c9736e3ff
 }

@@ -133,24 +133,22 @@ public class TestRobot2 {
         //}
 
         //Compute A Path
-        //double [] rob_pos = lr.getPosition();
-        //double[] rob_pos_grid = new double[2];
-        //rob_pos_grid[0] = rob_pos[0] + Math.abs(x_min);
-        //rob_pos_grid[1] = rob_pos[1] + Math.abs(y_min);
-        ////System.out.println("X Coordinate: " + rob_pos[0]);
-        ////System.out.println("Y Coordinate: " + rob_pos[1]);
-        //System.out.println("X Coordinate with offset: " + rob_pos_grid[0]);
-        //System.out.println("Y Coordinate with offset: " + rob_pos_grid[1]);
-        //Point start = new Point(rob_pos_grid);
-        ////System.out.println("rob_pos_grid[0]: " + rob_pos_grid[0] + " " + rob_pos_grid[1]);
-        //Point goal = new Point(rob_pos_grid[0] + 10.0, rob_pos_grid[1]);
-        //Pathfinder scout = new Pathfinder(0.2, 0.2, (double)x_min, (double)y_min, grid);
-        //Path path = scout.findPath(start, grid);
-        //System.out.println("Pathlength: " + path.path.length);
-        ////Follow the Path
-        //PathFollower follower = new PathFollower(path);
-        //System.out.print("Pathfollowing begins");
-        //follower.run();
+        double [] rob_pos = lr.getPosition();
+        double[] rob_pos_grid = new double[2];
+        rob_pos_grid[0] = rob_pos[0] + Math.abs(x_min);
+        rob_pos_grid[1] = rob_pos[1] + Math.abs(y_min);
+
+
+        Point start = new Point(rob_pos_grid);
+
+        Pathfinder scout = new Pathfinder(0.2, 0.2, (double)x_min, (double)y_min, grid);
+        Path path = scout.findPath(start, grid);
+        System.out.println("Pathlength: " + path.path.length);
+
+        //Follow the Path
+        PathFollower follower = new PathFollower(path);
+        System.out.print("Pathfollowing begins");
+        follower.run();
 
 
 

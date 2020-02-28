@@ -1,5 +1,7 @@
+/**
+ * Simple class that stores a sequence of points and is able to iterate through it
+ */
 
-// Simple class that stores a sequence of points and is able to iterate through it
 public class Path
 {
    public Point[] path;
@@ -12,7 +14,6 @@ public class Path
     public Point getGoalPoint(Point pos, double targetDistance) {
         while(!pathFinished() && path[nextPoint].getDistance(pos) < targetDistance) {
             nextPoint++;
-            //System.out.println("Point #"+ nextPoint +" too close!");
         }
         return getNextPoint();
     }
@@ -24,8 +25,11 @@ public class Path
     public Point getNextPoint() {
         return path[nextPoint];
     }
-   
-   // Return the path as a list of Point objects
+
+    /**
+     * Return the path as an array of Point objects
+     * @return Array of Points
+     */
    public Point[] getPath()
    {
       return path;

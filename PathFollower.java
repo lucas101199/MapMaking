@@ -15,6 +15,8 @@ public class PathFollower {
         this.path = path;
     }
 
+
+    //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
     void run() throws Exception {
         comm.getResponse(locResponse);
         pos = getPosition();
@@ -26,6 +28,7 @@ public class PathFollower {
         System.out.println("Path done!");
     }
 
+    //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
     void step() throws Exception {
         comm.getResponse(locResponse);
         pos = getPosition();

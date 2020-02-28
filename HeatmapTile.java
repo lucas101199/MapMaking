@@ -1,3 +1,7 @@
+/**
+ * This class represents one element of a Heatmap. It stores the direction from which it was heated, its x and y value and
+ * a boolean to determine if it is already heated.
+ */
 public class HeatmapTile {
     //Direction from where the heat cam
     enum Dir {

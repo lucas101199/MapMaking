@@ -1,3 +1,6 @@
+/**
+ * This class contains the methods that are used for following the path created by the <code>Pathfinder</code>.
+ */
 public class PathFollower {
     public static double FINAL_DISTANCE = 0.2;
     public Point pos;
@@ -43,6 +46,12 @@ public class PathFollower {
         return new Point(position[0], position[1]);
     }
 
+    /**
+     * Takes a point in world coordinates and convertes it into the robots coordinate system.
+     * @param p Point that shall be converted into robot coordinates.
+     * @param pos The current position of the robot.
+     * @return A <code>Point</code> with the x and y value beeing in robot coordinates.
+     */
     Point worldToRobot(Point p, Point pos) {
         double angle = locResponse.getHeadingAngle();
         double cos = Math.cos(angle);
@@ -52,6 +61,12 @@ public class PathFollower {
         return new Point(x,y);
     }
 
+    /**
+     * Takes a point in robot coordinates and convertes it into world coordinate system.
+     * @param p Point that shall be converted.
+     * @param pos The current position of the robot.
+     * @return A <code>Point</code> with the x and y value beeing in world coordinates.
+     */
     Point robotToWorld(Point p, Point pos) {
         double angle = locResponse.getHeadingAngle();
         double cos = Math.cos(angle);
@@ -62,6 +77,13 @@ public class PathFollower {
     }
 
     //takes world point
+
+    /**
+     * Calculates the curvature of the circle through the point and the robot.
+     * @param p Point in world coordinates.
+     * @param pos Robot position.
+     * @return The curvature
+     */
     double getCurvature(Point p, Point pos) {
         Point wtR = worldToRobot(p,pos);
         return 2 * wtR.y / p.getSquaredDistance(pos);

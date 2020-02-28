@@ -1,5 +1,9 @@
 import java.util.*;
 
+/**
+ * This class is used to find the next suitable go to point in the world that presumably yields the most exploration
+ * potential. Then the shortest path from the current position to this point is calculated and returend.
+ */
 public class Pathfinder {
 
     private HeatmapTile[][] heatMap;
@@ -26,6 +30,13 @@ public class Pathfinder {
         //System.out.println("X length heatmap : " +  heatMap[0].length);
     }
 
+    /**
+     * Takes position of the robot and the regular grid. Computes a goal point on frontier based method and creates a path
+     * how to get there and returns it.
+     * @param start The position of the robot in world coordinates.
+     * @param map The regular grid of the world.
+     * @return Array of points that mark the path to the goal point.
+     */
     public Path findPath(Point start, float[][] map) {
         //System.out.println("Goal Map Value: " + map[y2Grid(goal.getY())][x2Grid(goal.getX())]);
         resetHeatmap(map);
@@ -65,11 +76,18 @@ public class Pathfinder {
         }
     }
 
+    /**
+     * Marks the starting tile of the heatmap as checked and initializes the LinkedList that is used to store the <code>HeatmapTiles</code>
+     * that currently build the wavefront. Expands the wavefront until one of the tiles is the goal point.
+     * @param s Robot position in world coordinates
+     * @param g Goal point in world coordinates
+     * @param map Regular grid of the world
+     */
     private void heatWave(Point s, Point g, float[][] map) {
         Queue<HeatmapTile> waveFront = new LinkedList<>();
 
         //Setting tile from the start point on checked and adding it to the queue
-        System.out.println(heatMap[y2Grid(s.getY())][x2Grid(s.getX())].getX());
+        //System.out.println(heatMap[y2Grid(s.getY())][x2Grid(s.getX())].getX());
         heatMap[y2Grid(s.getY())][x2Grid(s.getX())].setChecked(true);
         waveFront.add(heatMap[y2Grid(s.getY())][x2Grid(s.getX())]);
         //System.out.println("waveFront.peek X: " + waveFront.peek().getX());
@@ -98,7 +116,17 @@ public class Pathfinder {
         }
     }
 
-
+    /**
+     * Checks if the tiles in northward, eastward, southward and westward direction of the Tile, whose x and y value are
+     * handed over to method, are still in the bounds of the regular grid or not and if those are free or blocked by an obstacle.
+     * If they are free the tiles direction value is marked correspondent from which direction they were explored and they
+     * are appended to the <code>waveFront</code>. Undependet of if the tiles are free or not their boolean <code>checked</code>
+     * is set to true to mark them as checked.
+     * @param waveFront LinkeList that stores the <code>HeatmapTile</code> that currently build the wavefront.
+     * @param map The regular grid that represents the world
+     * @param x The x value of the HeatmapTile whose neighbors should be explored
+     * @param y The y value of the HeatmapTile whose neighbors should be explored
+     */
     private void expandWavefront(Queue<HeatmapTile> waveFront, float[][] map, int x, int y) {
         //Check North
         //System.out.println("x: " + x + " y: " +  y);
@@ -166,6 +194,16 @@ public class Pathfinder {
     }
 
 
+    /**
+     * This method starts at the goal point and safes the element in a stack and checks which direction is safed in this element.
+     * Then the next element of the heatmap is safed in the stack. This is repeated until the start point (the robot position)
+     * is reached.
+     * In the next step the elements are pushed one by one from the stack and for each element a corresponding point is
+     * generated (the middle of the grid tile) and safed in the path array which is then returned.
+     * @param s The position of the robot in world coordinates
+     * @param g The goal point in world coordinates
+     * @return An array of points which build the path to the goal point.
+     */
     private Path createPath(Point s, Point g) {
         int x = x2Grid(g.getX());
         int y = y2Grid(g.getY());

@@ -9,7 +9,7 @@ public class Pathfinder {
     private HeatmapTile[][] heatMap;
     private double tileWidth;
     private double tileHeight;
-    private static float unknown = 0.4f;
+    private static float unknown = 0.5f;
     private double x_min;
     private double y_min;
 

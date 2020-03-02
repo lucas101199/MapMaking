@@ -170,7 +170,7 @@ public class TestRobot2 {
             for (int i = nRows - 1; i > 0; i--) {
                 for (int j = 0; j < nCols; j++) {
                     grid[i][j] = (float) 0.5;
-                    image_grid[i][j] = (float) 0.4;
+                    image_grid[i][j] = (float) 0.5;
 
                 }
                 first_time = false;

@@ -1,6 +1,10 @@
 
+/**
+ * This Class resambles a position in the world with x and y coordinate.
+ */
 public class Point
 {
+
     public double x, y;
 
     public Point(double pos[])

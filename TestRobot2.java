@@ -50,14 +50,15 @@ public class TestRobot2 {
         y_max = 20;
         coord = new int[]{x_min, y_min, x_max, y_max};
 
-        try {
+        robot.run();
+        /*try {
             // Check for connection c
             robot.run();
         }
         catch (Exception e) {
             System.out.println(e);
             System.exit(-1);
-        }
+        }*/
     }
 
     private void run() throws Exception {
@@ -68,20 +69,95 @@ public class TestRobot2 {
 
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
+
         // set up the request to move in a circle
         dr.setAngularSpeed(Math.PI * 0.1);
         dr.setLinearSpeed(0.0);
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
+/*
+        for (int i = 0; i < 10; i++) {
+            robotcomm.getResponse(lr);
+            double[] pos = lr.getPosition();
+            System.out.println("X Cor: " + pos[0]);
+            System.out.println("Y Cor: " + pos[1]);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+            }
+        }
+*/
+
+
+/*
+        dr.setAngularSpeed(Math.PI * 0.0);
+        dr.setLinearSpeed(0.0);
+        robotcomm.putRequest(dr);
+*/
+
+/*
 
         double angle = 0;
         double[] echoes = new double[0];
-        // Ask for the laser beam angles
-        robotcomm.getResponse(lpr);
+        int i = 0;
+        while (i < 10000) {
+            // Ask for the laser beam angles
+            robotcomm.getResponse(lpr);
+            robotcomm.getResponse(lr);
+            robotcomm.getResponse(ler);
+            double[] angles = getLaserAngles(lpr);
+            angle = lr.getHeadingAngle();
+            echoes = ler.getEchoes();
+            float[][] grid = createMap(lr, angle, echoes, angles); // create an example map
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ex) {
+            }
+            i++;
+        }
+*/
 
+        // Ask for the laser beam angles
+        double angle = 0;
+        double[] echoes = new double[0];
+        robotcomm.getResponse(lpr);
+        robotcomm.getResponse(lr);
+        robotcomm.getResponse(ler);
         double[] angles = getLaserAngles(lpr);
-        for (int i = 0; i < 10; i++) {
+        angle = lr.getHeadingAngle();
+        echoes = ler.getEchoes();
+        float[][] grid = createMap(lr, angle, echoes, angles); // create an example map
+
+        //for (int i = grid.length - 1; i >= 0; i--) {
+        //    System.out.print("Y = " + i + "  ");
+        //    for (int j = 0; j < grid[0].length; j++) {
+        //        System.out.print("X = " + j + " " + grid[i][j] +  "  ");
+        //    }
+        //    System.out.print("\n");
+        //}
+
+        //Compute A Path
+        double [] rob_pos = lr.getPosition();
+        double[] rob_pos_grid = new double[2];
+        rob_pos_grid[0] = rob_pos[0] + Math.abs(x_min);
+        rob_pos_grid[1] = rob_pos[1] + Math.abs(y_min);
+
+
+        Point start = new Point(rob_pos_grid);
+
+        Pathfinder scout = new Pathfinder(0.2, 0.2, (double)x_min, (double)y_min, grid);
+        Path path = scout.findPath(start, grid);
+        System.out.println("Pathlength: " + path.path.length);
+
+        //Follow the Path
+        PathFollower follower = new PathFollower(path);
+        System.out.print("Pathfollowing begins");
+        follower.run();
+
+
+
+        /*for (int i = 0; i < 10; i++) {
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
@@ -101,8 +177,8 @@ public class TestRobot2 {
             echoes = ler.getEchoes();
             createMap(lr, angle, echoes, angles); // create an example map
             System.out.println("Object at " + echoes[135] + "m in " + angles[135] * 180.0 / Math.PI + " degrees"); //object in front of the robot
-        }
-        System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
+        }*/
+        /*System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
                 + " at 90: " + angles[90] * 180.0 / Math.PI + " at 225: " + angles[225] * 180.0 / Math.PI
                 + "\nAngle at 268: " + angles[268] * 180.0 / Math.PI + " at 270: " + angles[270] * 180.0 / Math.PI
                 + " at 270: " + angles[269] * 180.0 / Math.PI);
@@ -115,7 +191,10 @@ public class TestRobot2 {
 
         // set up request to stop the robot
         dr.setLinearSpeed(0);
-        dr.setAngularSpeed(0);
+
+
+        dr.setAngularSpeed(0);*/
+
 
 
         System.out.println("Stop robot");
@@ -127,25 +206,30 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
-    private void createMap(LocalizationResponse localizationResponse, double angle,
+    private float[][] createMap(LocalizationResponse localizationResponse, double angle,
                            double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
+        System.out.println("nCols: " + nCols);
         int nRows = (int) (Math.abs(y_max - y_min) / 0.2);
 
         boolean showGUI = true; // set this to false if you run in putty
         ShowMap map = new ShowMap(nRows, nCols, showGUI, coord);
 
         /* Creating a grid with 0.5 */
+
         if (first_time) {
            grid = new float[nRows][nCols];
+           float[][] image_grid = new float[nRows][nCols];
             for (int i = nRows - 1; i > 0; i--) {
                 for (int j = 0; j < nCols; j++) {
                     grid[i][j] = (float) 0.5;
+                   image_grid[i][j] = (float) 0.4;
+
                 }
-            }
             first_time = false;
         }
+
 
         // Position of the robot in the grid (red dot)
         double[] position_robot = getPosition(localizationResponse);
@@ -155,13 +239,20 @@ public class TestRobot2 {
         double tt = localizationResponse.getHeadingAngle(); //angle in radians
 
         for (int i = 0; i < echoes.length; i++) {
+
             double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle))
             double x_end_line = robotCol + (echoes[i] *  Math.cos(angles[i] + tt)); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            double y_end_line_image = robotRow + (echoes[i] * -Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle))
 
             int[] obstacle = map.xy_to_rc(x_end_line, y_end_line);
             int[] robot = map.xy_to_rc(robotCol, robotRow);
+            int[] obstacle_image = map.xy_to_rc(x_end_line, y_end_line_image);
+
             if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
                 colorGrid(grid, obstacle[0], obstacle[1], robot[0], robot[1], map);
+            }
+            if (x_end_line > x_min && x_end_line < x_max && y_end_line_image > y_min && y_end_line_image < y_max) {
+                colorGrid(image_grid, obstacle_image[0], obstacle_image[1]);
             }
         }
 
@@ -169,12 +260,13 @@ public class TestRobot2 {
         Position o = new Position(robotCol + 20, robotRow);
         System.out.println(" tt = " + p.getBearingTo(o));
 
-
         System.out.println(" tt = " + tt * (180 / Math.PI));
         System.out.println(" tt = " + angles[135] * (180 / Math.PI));
 
         // Update the grid
-        map.updateMap(grid, robotRow, robotCol, echoes, angles);
+        map.updateMap(image_grid, robotRow, robotCol, echoes, angles);
+        System.out.println("grid x length: " + grid[0].length);
+        return grid;
     }
 
 

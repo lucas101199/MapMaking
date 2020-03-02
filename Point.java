@@ -26,7 +26,7 @@ public class Point
         return Math.pow(p.x-x, 2) + Math.pow(p.y-y, 2);
     }
 
-    // Bearing to another position, realtive to 'North'
+    // Bearing to another position, relative to 'North'
     // Bearing have several meanings, in this case the angle between
     // north and the position p.
     public double getBearingTo(Point p) {

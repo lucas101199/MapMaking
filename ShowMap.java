@@ -141,25 +141,6 @@ public class ShowMap extends JPanel {
         g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
         this.updateUI();
 
-
-        LinkedList<Point> visited_point;
-
-        for (int i = 0; i < echoes.length; i++) {
-            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
-            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
-
-            int[] obstacle = xy_to_rc(x_end_line, y_end_line);
-            g.setColor(Color.BLUE);
-            g.drawLine(obstacle[0], obstacle[1], obstacle[0], obstacle[1]);
-            g.setColor(Color.CYAN);
-            if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
-                visited_point = drawBresenhamLine(position_robot[0], position_robot[1], obstacle[0], obstacle[1]);
-                for (Point point : visited_point) {
-                    map.setRGB((int) point.x, (int) point.y, 0);
-                }
-            }
-        }
-
         // update the gui
         this.updateUI();
     }
@@ -205,6 +186,12 @@ public class ShowMap extends JPanel {
         int col = (int) ((x - x_min) / cell_size);
         int row = (int) ((y - y_min) / cell_size);
         return new int[]{col,row};
+    }
+
+    public double[] rc_to_xy(int col, int row) {
+        double x = col * cell_size + x_min;
+        double y = row * cell_size + y_min;
+        return new double[]{x,y};
     }
 
     private int sign (int x) {
@@ -254,7 +241,6 @@ public class ShowMap extends JPanel {
         return visited_point;
     }
 
-
     /**
      * Calculate the probability that the cell is empty using bayes's rule
      *
@@ -264,12 +250,17 @@ public class ShowMap extends JPanel {
      *            probability that the cell is empty in region II
      *
      */
-    public float Bayes(int rayon) {
+    public float Bayes(double rayon) {
         float p_empty_bayes = (float) ((40-rayon) / 40 + 1) / 2;
         return 1 - p_empty_bayes;
     }
 
-    public float Occupancy_probability(float p_occupied_bayes)  {
-        return p_occupied_bayes * p_occupied / (p_occupied_bayes * p_occupied) + (1 - p_occupied_bayes) * p_empty);
+    public float recursive_bayes(float p_occupied_bayes, float old_occupancy){
+        return (p_occupied_bayes * old_occupancy) / ((p_occupied_bayes * old_occupancy) + ((1 - p_occupied_bayes) * (1 - old_occupancy)));
+    }
+
+    //proba occupied in region 1
+    public float Bayes_R1(double rayon) {
+        return (float) (((40-rayon)/40 + 1) / 2 * 0.98);
     }
 }

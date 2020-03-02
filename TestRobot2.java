@@ -1,3 +1,5 @@
+import java.util.LinkedList;
+
 /**
  * TestRobot interfaces to the (real or virtual) robot over a network
  * connection. It uses Java -> JSON -> HttpRequest -> Network -> DssHost32 ->
@@ -16,7 +18,8 @@ public class TestRobot2 {
     public static int x_max;
     public static int y_max;
     public static int[] coord;
-
+    public boolean first_time = true;
+    public float[][] grid;
     /**
      * Create a robot connected to host "host" at port "port"
      *
@@ -66,13 +69,11 @@ public class TestRobot2 {
         System.out.println("Creating request");
         DifferentialDriveRequest dr = new DifferentialDriveRequest();
         // set up the request to move in a circle
-        dr.setAngularSpeed(Math.PI * 0.0);
+        dr.setAngularSpeed(Math.PI * 0.1);
         dr.setLinearSpeed(0.0);
         System.out.println("Start to move robot");
         int rc = robotcomm.putRequest(dr);
         System.out.println("Response code " + rc);
-
-        robotcomm.getResponse(lr);
 
         double angle = 0;
         double[] echoes = new double[0];
@@ -86,6 +87,7 @@ public class TestRobot2 {
             } catch (InterruptedException ex) {
             }
 
+            robotcomm.getResponse(lr);
             angle = lr.getHeadingAngle();
             System.out.println("heading = " + angle);
 
@@ -95,7 +97,9 @@ public class TestRobot2 {
 
             // Ask the robot for laser echoes
             robotcomm.getResponse(ler);
+
             echoes = ler.getEchoes();
+            createMap(lr, angle, echoes, angles); // create an example map
             System.out.println("Object at " + echoes[135] + "m in " + angles[135] * 180.0 / Math.PI + " degrees"); //object in front of the robot
         }
         System.out.println("Angle at 0: " + angles[0] * 180.0 / Math.PI + " at 45: " + angles[45] * 180.0 / Math.PI
@@ -112,7 +116,7 @@ public class TestRobot2 {
         // set up request to stop the robot
         dr.setLinearSpeed(0);
         dr.setAngularSpeed(0);
-        createMap(lr, angle, echoes, angles); // create an example map
+
 
         System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
@@ -133,11 +137,14 @@ public class TestRobot2 {
         ShowMap map = new ShowMap(nRows, nCols, showGUI, coord);
 
         /* Creating a grid with 0.5 */
-        float[][] grid = new float[nRows][nCols];
-        for (int i = nRows - 1; i > 0; i--) {
-            for (int j = 0; j < nCols; j++) {
-                grid[i][j] = (float) 0.4;
+        if (first_time) {
+           grid = new float[nRows][nCols];
+            for (int i = nRows - 1; i > 0; i--) {
+                for (int j = 0; j < nCols; j++) {
+                    grid[i][j] = (float) 0.5;
+                }
             }
+            first_time = false;
         }
 
         // Position of the robot in the grid (red dot)
@@ -145,47 +152,55 @@ public class TestRobot2 {
         int robotCol = (int) Math.round(position_robot[0]); //y
         int robotRow = (int) Math.round(position_robot[1]); //x
 
+        double tt = localizationResponse.getHeadingAngle(); //angle in radians
+
         for (int i = 0; i < echoes.length; i++) {
-            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
-            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle))
+            double x_end_line = robotCol + (echoes[i] *  Math.cos(angles[i] + tt)); // x2 = x1 + (lenght * cos(angle)) angle in radians
 
             int[] obstacle = map.xy_to_rc(x_end_line, y_end_line);
+            int[] robot = map.xy_to_rc(robotCol, robotRow);
             if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
-                colorGrid(grid, obstacle[0], obstacle[1]);
+                colorGrid(grid, obstacle[0], obstacle[1], robot[0], robot[1], map);
             }
         }
 
-        double tt = localizationResponse.getHeadingAngle(); //angle in radians
+        Position p = new Position(robotCol, robotRow);
+        Position o = new Position(robotCol + 20, robotRow);
+        System.out.println(" tt = " + p.getBearingTo(o));
+
+
         System.out.println(" tt = " + tt * (180 / Math.PI));
+        System.out.println(" tt = " + angles[135] * (180 / Math.PI));
 
         // Update the grid
         map.updateMap(grid, robotRow, robotCol, echoes, angles);
     }
 
-    //Color the grid
-    public void colorGrid(float[][] grid, int x, int y) {
-        int x_cell = x / 5;
-        int y_cell = y / 5;
 
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 5; j++) {
-                grid[y_cell * 5 + j][x_cell * 5 + i] = (float) 1.0;
+
+    //Color the grid using bayes
+    public void colorGrid(float[][] grid, int x, int y, int start_x, int start_y, ShowMap map) {
+        LinkedList<Point> visited_points = map.drawBresenhamLine(start_x, start_y, x, y);
+        double[] pos_robot_xy = map.rc_to_xy(start_x, start_y);
+        Point point_robot = new Point(pos_robot_xy[0], pos_robot_xy[1]);
+
+        for (Point point : visited_points) {
+            float prob_cell = grid[(int)point.y][(int)point.y];
+            double[] point_rayon_xy = map.rc_to_xy((int) point.x, (int) point.y);
+            Point new_point = new Point(point_rayon_xy[0], point_rayon_xy[1]);
+            double distance_robot_cell = point_robot.getDistance(new_point);
+            float prob_occ;
+            //if point is in region 2
+            if(point != visited_points.getLast()) {
+                prob_occ = map.Bayes(distance_robot_cell);
             }
+            else { //point is in region 1
+                prob_occ = map.Bayes_R1(distance_robot_cell);
+            }
+            float prob_occ_recur = map.recursive_bayes(prob_occ, prob_cell);
+            grid[(int) point.y][(int) point.x] = prob_occ_recur;
         }
-    }
-
-    //Determine where the obstacle is in the cell
-    public int WhereIsObstacle(int x, int y, int scale) {
-        if (x <= (scale / 2) && y <= (scale / 2)) {
-            return 1; //obstacle in Upper left area
-        }
-        if (x >= (scale / 2) && y <= (scale / 2)) {
-            return 2; //obstacle in upper right area
-        }
-        if (x <= (scale / 2) && y >= (scale / 2)) {
-            return 3; //obstacle in bottom left area
-        }
-        return 4; //Otherwise bottom right area
     }
 
     /**
@@ -195,8 +210,8 @@ public class TestRobot2 {
      * @return angle in degrees
      */
     double getBearingAngle(LocalizationResponse lr) {
-        double angle = lr.getHeadingAngle();
-        return angle * 180 / Math.PI;
+        return  lr.getHeadingAngle();
+
     }
 
     /**

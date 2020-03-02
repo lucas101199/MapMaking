@@ -214,7 +214,7 @@ public class Pathfinder {
                     frontline.add(heatMap[i][j]);
                     ListIterator<HeatmapTile> iterator = frontline.listIterator();
                     while (iterator.hasNext()) {
-                        addCandidates(iterator.next(), frontline, map);
+                        addCandidates(iterator.next(), iterator, map);
                     }
                     frontiers.add(frontline);
                 }
@@ -241,35 +241,35 @@ public class Pathfinder {
      * @param frontline List that contains the tiles the frontier consists of
      * @param map The grid wich contains the knowledge about the world
      */
-    private void addCandidates(HeatmapTile start, LinkedList<HeatmapTile> frontline, float[][] map) {
+    private void addCandidates(HeatmapTile start, ListIterator<HeatmapTile> iterator, float[][] map) {
         int y = start.getY();
         int x = start.getX();
 
         //Check north
         if ( ((y + 1) < map.length) && (!heatMap[y + 1][x].getChecked()) && (map[y + 1][x] == unknown) && (neighborKnown(y + 1, x, map)) ) {
             heatMap[y + 1][x].setChecked(true);
-            frontline.add(heatMap[y + 1][x]);
+            iterator.add(heatMap[y + 1][x]);
             return;
         }
 
         //Check East
         if ( ((x + 1) < map[0].length) && (!heatMap[y][x + 1].getChecked()) && (map[y][x + 1] == unknown) && (neighborKnown(y, x + 1, map)) ) {
             heatMap[y][x + 1].setChecked(true);
-            frontline.add(heatMap[y][x + 1]);
+            iterator.add(heatMap[y][x + 1]);
             return;
         }
 
         //Check South
         if ( ((y - 1) >= 0) && (!heatMap[y - 1][x].getChecked()) && (map[y - 1][x] == unknown) && (neighborKnown(y - 1, x, map)) ) {
             heatMap[y - 1][x].setChecked(true);
-            frontline.add(heatMap[y - 1][x]);
+            iterator.add(heatMap[y - 1][x]);
             return;
         }
 
         //Check West
         if ( ((x - 1) >= 0) && (!heatMap[y][x - 1].getChecked()) && (map[y][x - 1] == unknown) && (neighborKnown(y, x - 1, map)) ) {
             heatMap[y][x - 1].setChecked(true);
-            frontline.add(heatMap[y][x - 1]);
+            iterator.add(heatMap[y][x - 1]);
         }
     }
 

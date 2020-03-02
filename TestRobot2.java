@@ -138,7 +138,7 @@ public class TestRobot2 {
                 pos.setX(lr.getPosition()[0]);
                 pos.setY(lr.getPosition()[1]);
 
-                follower.step(pos);
+                follower.step(pos, lr);
                 follower.sleep(30);
             }
 

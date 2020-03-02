@@ -19,9 +19,9 @@ public class PathFollower {
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
 
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
-    void step(Point pos) throws Exception {
+    void step(Point pos, LocalizationResponse lr) throws Exception {
         Point goalPoint = path.getGoalPoint(pos,lookDistance);
-        double curvature = getCurvature(goalPoint, pos);
+        double curvature = getCurvature(goalPoint, pos, lr);
         driveRequest.setLinearSpeed(speed);
         driveRequest.setAngularSpeed(speed*curvature);
         comm.putRequest(driveRequest);
@@ -42,8 +42,8 @@ public class PathFollower {
      * @param pos The current position of the robot.
      * @return A <code>Point</code> with the x and y value beeing in robot coordinates.
      */
-    Point worldToRobot(Point p, Point pos) {
-        double angle = locResponse.getHeadingAngle();
+    Point worldToRobot(Point p, Point pos, LocalizationResponse lr) {
+        double angle = lr.getHeadingAngle();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         double x = (p.x-pos.x) * cos + (p.y-pos.y) * sin;
@@ -74,8 +74,8 @@ public class PathFollower {
      * @param pos Robot position.
      * @return The curvature
      */
-    double getCurvature(Point p, Point pos) {
-        Point wtR = worldToRobot(p,pos);
+    double getCurvature(Point p, Point pos, LocalizationResponse lr) {
+        Point wtR = worldToRobot(p,pos, lr);
         return 2 * wtR.y / p.getSquaredDistance(pos);
     }
 

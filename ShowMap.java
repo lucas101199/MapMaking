@@ -33,6 +33,7 @@ public class ShowMap extends JPanel {
     private boolean showGUI = true;
     private double cell_size = 0.2; //20cm
     private int x_min, y_min, x_max, y_max;
+    private float p_occupied, p_empty = (float) 0.5;
 
     /**
      * Constructor for ShowMap
@@ -140,73 +141,6 @@ public class ShowMap extends JPanel {
         g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
         this.updateUI();
 
-        
-        LinkedList<Point> visited_point = new LinkedList<>();
-
-        for (int i = 0; i < echoes.length; i++) {
-            double y_end_line = robotRow + (echoes[i] * -Math.sin(angles[i])); // y2 = y1 + (lenght * sin(angle))
-            double x_end_line = robotCol + (echoes[i] * Math.cos(angles[i])); // x2 = x1 + (lenght * cos(angle)) angle in radians
-
-            int[] obstacle = xy_to_rc(x_end_line, y_end_line);
-            g.setColor(Color.BLUE);
-            g.drawLine(obstacle[0], obstacle[1], obstacle[0], obstacle[1]);
-            g.setColor(Color.CYAN);
-            if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
-                visited_point = drawBresenhamLine(position_robot[0], position_robot[1], obstacle[0], obstacle[1]);
-                for (Point point : visited_point) {
-                    map.setRGB((int) point.x, (int) point.y, 0);
-                }
-            }
-        }
-
-        // update the gui
-        this.updateUI();
-    }
-
-    /**
-     * Creates a new BufferedImage from a grid with integer values between 0 -
-     * maxVal, where 0 is black and maxVal is white, with a grey scale in
-     * between. Negative values are shown as gray. Call this Method after you
-     * have updated the grid.
-     *
-     * @param grid
-     *            is the updated grid
-     * @param maxVal
-     *            is the max value that a grid cell can have (e.g. 15 in
-     *            standard HIMM)
-     * @param robotRow
-     *            is the current y-position (row) of the robot in the grid.
-     * @param robotCol
-     *            is the current x-position (column) of the robot translated to
-     *            column in the grid.
-     */
-    public synchronized void updateMap(int[][] grid, int maxVal, int robotRow,
-                                       int robotCol) {
-        // mapping the grid to a BufferedImage
-        Color c;
-        for (int col = 0; col < grid.length; col++) {
-            for (int row = 0; row < grid[0].length; row++) {
-                int value = grid[col][row];
-                // if value is <0 draw a gray pixel
-                // else mapping the value between 0 - 255 where 0 is black and
-                // 255 is white
-                if (value < 0) {
-                    c = new Color(127, 127, 127);
-                } else {
-                    value = Math.abs(value * 255 / maxVal - 255);
-                    c = new Color(value, value, value);
-                }
-                // setting pixel color for pixel col and row
-                map.setRGB(row, col, c.getRGB());
-            }
-
-        }
-        Graphics g = map.getGraphics();
-        // drawing a filled red Rectangle for the robot. Rectangle size is
-        // 6x6
-        g.setColor(Color.RED);
-        g.fillRect((int) robotRow - robotSize / 2, (int) robotCol - robotSize
-                / 2, robotSize, robotSize);
         // update the gui
         this.updateUI();
     }
@@ -247,16 +181,24 @@ public class ShowMap extends JPanel {
         g.dispose();
     }
 
+    //convert the data receive from the robot to fit in the grid
     public int[] xy_to_rc(double x, double y) {
         int col = (int) ((x - x_min) / cell_size);
         int row = (int) ((y - y_min) / cell_size);
         return new int[]{col,row};
     }
 
+    public double[] rc_to_xy(int col, int row) {
+        double x = col * cell_size + x_min;
+        double y = row * cell_size + y_min;
+        return new double[]{x,y};
+    }
+
     private int sign (int x) {
         return Integer.compare(x, 0);
     }
 
+    //Bresenham algorithm use to know which cell to update
     public LinkedList<Point> drawBresenhamLine (int xstart, int ystart, int xend, int yend) {
         int x, y, dx, dy, incx, incy, pdx, pdy, es, el, err;
         LinkedList<Point> visited_point = new LinkedList<>();
@@ -297,5 +239,28 @@ public class ShowMap extends JPanel {
             visited_point.add(new Point(x,y));
         }
         return visited_point;
+    }
+
+    /**
+     * Calculate the probability that the cell is empty using bayes's rule
+     *
+     * @param rayon
+     *            distance from the robot to the cell
+     * @return p_empty
+     *            probability that the cell is empty in region II
+     *
+     */
+    public float Bayes(double rayon) {
+        float p_empty_bayes = (float) ((40-rayon) / 40 + 1) / 2;
+        return 1 - p_empty_bayes;
+    }
+
+    public float recursive_bayes(float p_occupied_bayes, float old_occupancy){
+        return (p_occupied_bayes * old_occupancy) / ((p_occupied_bayes * old_occupancy) + ((1 - p_occupied_bayes) * (1 - old_occupancy)));
+    }
+
+    //proba occupied in region 1
+    public float Bayes_R1(double rayon) {
+        return (float) (((40-rayon)/40 + 1) / 2 * 0.98);
     }
 }

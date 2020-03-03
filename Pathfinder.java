@@ -208,7 +208,7 @@ public class Pathfinder {
 
         for (int i = 0; i < map.length; i ++) {
             for (int j = 0; j < map[0].length; j++) {
-                if ( (map[i][j] == unknown) && (neighborObstacle(i, j, map)) && (neighborKnown(i, j, map)) && (!heatMap[i][j].getChecked()) ) {
+                if ( (map[i][j] < unknown) && (neighborObstacle(i, j, map)) && (neighborUnknown(i, j, map)) && (!heatMap[i][j].getChecked()) ) {
                     LinkedList<HeatmapTile> frontline = new LinkedList<>();
                     heatMap[i][j].setChecked(true);
                     frontline.add(heatMap[i][j]);
@@ -238,7 +238,7 @@ public class Pathfinder {
      * Checks if the neighbors of the <code>start</code> tile have at least one neighbor that is already known. If so the
      * new <code>HeatmapTile</code> is checked and added to the <code>frontline</code>.
      * @param start The tile whose neighbors are to be checked.
-     * @param frontline List that contains the tiles the frontier consists of
+     * @param iterator ListIterator for frontier List that contains the tiles the frontier consists of
      * @param map The grid wich contains the knowledge about the world
      */
     private void addCandidates(HeatmapTile start, ListIterator<HeatmapTile> iterator, float[][] map) {
@@ -246,28 +246,28 @@ public class Pathfinder {
         int x = start.getX();
 
         //Check north
-        if ( ((y + 1) < map.length) && (!heatMap[y + 1][x].getChecked()) && (map[y + 1][x] == unknown) && (neighborKnown(y + 1, x, map)) ) {
+        if ( ((y + 1) < map.length) && (!heatMap[y + 1][x].getChecked()) && (map[y + 1][x] < unknown) && (neighborUnknown(y + 1, x, map)) ) {
             heatMap[y + 1][x].setChecked(true);
             iterator.add(heatMap[y + 1][x]);
             return;
         }
 
         //Check East
-        if ( ((x + 1) < map[0].length) && (!heatMap[y][x + 1].getChecked()) && (map[y][x + 1] == unknown) && (neighborKnown(y, x + 1, map)) ) {
+        if ( ((x + 1) < map[0].length) && (!heatMap[y][x + 1].getChecked()) && (map[y][x + 1] < unknown) && (neighborUnknown(y, x + 1, map)) ) {
             heatMap[y][x + 1].setChecked(true);
             iterator.add(heatMap[y][x + 1]);
             return;
         }
 
         //Check South
-        if ( ((y - 1) >= 0) && (!heatMap[y - 1][x].getChecked()) && (map[y - 1][x] == unknown) && (neighborKnown(y - 1, x, map)) ) {
+        if ( ((y - 1) >= 0) && (!heatMap[y - 1][x].getChecked()) && (map[y - 1][x] < unknown) && (neighborUnknown(y - 1, x, map)) ) {
             heatMap[y - 1][x].setChecked(true);
             iterator.add(heatMap[y - 1][x]);
             return;
         }
 
         //Check West
-        if ( ((x - 1) >= 0) && (!heatMap[y][x - 1].getChecked()) && (map[y][x - 1] == unknown) && (neighborKnown(y, x - 1, map)) ) {
+        if ( ((x - 1) >= 0) && (!heatMap[y][x - 1].getChecked()) && (map[y][x - 1] < unknown) && (neighborUnknown(y, x - 1, map)) ) {
             heatMap[y][x - 1].setChecked(true);
             iterator.add(heatMap[y][x - 1]);
         }
@@ -315,30 +315,30 @@ public class Pathfinder {
      * @param map The grid wich contains the knowledge about the world
      * @return
      */
-    private boolean neighborKnown(int y, int x, float[][] map) {
+    private boolean neighborUnknown(int y, int x, float[][] map) {
     //Check north
-        if ( ((y + 1) < map.length) && (map[y + 1][x] < unknown) ) {return true;}
+        if ( ((y + 1) < map.length) && (map[y + 1][x] == unknown) ) {return true;}
 
     //Check northeast
-        if ( ((y + 1) < map.length) && ((x + 1) < map[0].length) && (map[y + 1][x + 1] < unknown)) {return true;}
+        if ( ((y + 1) < map.length) && ((x + 1) < map[0].length) && (map[y + 1][x + 1] == unknown)) {return true;}
 
     //Check east
-        if ( ((x + 1) < map[0].length) && (map[y][x + 1] < unknown) ) {return true;}
+        if ( ((x + 1) < map[0].length) && (map[y][x + 1] == unknown) ) {return true;}
 
     //Check southeast
-        if ( ((y - 1) >= 0) && ((x + 1) < map[0].length) && (map[y - 1][x + 1] < unknown)) {return true;}
+        if ( ((y - 1) >= 0) && ((x + 1) < map[0].length) && (map[y - 1][x + 1] == unknown)) {return true;}
 
     //Check south
-        if ( ((y - 1) >= 0) && (map[y - 1][x] < unknown) ) {return true;}
+        if ( ((y - 1) >= 0) && (map[y - 1][x] == unknown) ) {return true;}
 
     //Check southwest
-        if ( ((y - 1) >= 0) && ((x - 1) >= 0) && (map[y - 1][x - 1] < unknown)) {return true;}
+        if ( ((y - 1) >= 0) && ((x - 1) >= 0) && (map[y - 1][x - 1] == unknown)) {return true;}
 
     //Check west
-        if ( ((x - 1) >= 0) && (map[y][x - 1] < unknown) ) {return true;}
+        if ( ((x - 1) >= 0) && (map[y][x - 1] == unknown) ) {return true;}
 
     //Check northwest
-        if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] < unknown)) {return true;}
+        if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] == unknown)) {return true;}
 
         return false;
 }

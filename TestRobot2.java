@@ -121,7 +121,16 @@ public class TestRobot2 {
             Pathfinder scout = new Pathfinder(0.2, 0.2, (double) x_min, (double) y_min, grid);
             Path path = scout.findPath(start, grid);
             System.out.println("Pathlength: " + path.path.length);
+            if (path.path.length == 1) {
+                for (int i = 0; i < grid.length; i++) {
+                    System.out.println("\n");
+                    for (int j = 0; j < grid[0].length; j++) {
+                        System.out.print(grid[i][j] +  " ");
+                    }
+                }
+            }
 
+            sleep(10000);
             //Follow the Path
             PathFollower follower = new PathFollower(path);
             System.out.print("Pathfollowing begins");
@@ -135,7 +144,7 @@ public class TestRobot2 {
                 angle = lr.getHeadingAngle();
                 echoes = ler.getEchoes();
 
-                if (objectAvoider.avoidObject(echoes, angle)) { //if obstacle encounter stop the robot
+                if (objectAvoider.avoidObject(echoes)) { //if obstacle encounter stop the robot
                     break;
                 }
 
@@ -146,6 +155,11 @@ public class TestRobot2 {
                 follower.step(pos, lr);
                 follower.sleep(30);
             }
+            System.out.println("Path finished!");
+            dr.setAngularSpeed(Math.PI * 0);
+            dr.setLinearSpeed(0);
+            robotcomm.putRequest(dr);
+            sleep(5000);
 
         }
 
@@ -202,7 +216,6 @@ public class TestRobot2 {
         // Update the grid
         map.updateMap(image_grid, robotRow, robotCol, echoes, angles);
 
-        System.out.println("grid x length: " + grid[0].length);
         return grid;
     }
 

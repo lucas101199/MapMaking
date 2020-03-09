@@ -89,6 +89,7 @@ public class Pathfinder {
             } else {
                 heatMap[waveFront.peek().getY()][waveFront.peek().getX()].setChecked(true);
                 waveFront.peek().setChecked(true);
+
                 break;
             }
         }
@@ -108,7 +109,7 @@ public class Pathfinder {
     private void expandWavefront(Queue<HeatmapTile> waveFront, float[][] map, int x, int y) {
         //Check North
         if (((y + 1) < map.length) && (x < map[0].length) && (x >= 0)) {
-            if ((!heatMap[y + 1][x].getChecked()) && (map[y + 1][x] < unknown)) {
+            if ((heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown)) {
                 heatMap[y + 1][x].setChecked(true);
                 heatMap[y + 1][x].setDir(HeatmapTile.Dir.SOUTH);
                 waveFront.add(heatMap[y + 1][x]);
@@ -119,7 +120,7 @@ public class Pathfinder {
 
         //Check East
         if (((x + 1) < map[0].length) && (y < map.length) && (y >= 0)) {
-            if ((!heatMap[y][x + 1].getChecked()) && (map[y][x + 1] < unknown)) {
+            if ((heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown)) {
                 heatMap[y][x + 1].setChecked(true);
                 heatMap[y][x + 1].setDir(HeatmapTile.Dir.WEST);
                 waveFront.add(heatMap[y][x + 1]);
@@ -130,7 +131,7 @@ public class Pathfinder {
 
         //Check South
         if (((y - 1) >= 0) && (x < map[0].length) && (x >= 0)) {
-            if ((!heatMap[y - 1][x].getChecked()) && (map[y - 1][x] < unknown)) {
+            if ((heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown)) {
                 heatMap[y - 1][x].setChecked(true);
                 heatMap[y - 1][x].setDir(HeatmapTile.Dir.NORTH);
                 waveFront.add(heatMap[y - 1][x]);
@@ -141,7 +142,7 @@ public class Pathfinder {
 
         //Check West
         if (((x - 1) >= 0) && (y < map.length) && (y >= 0)){
-            if ((!heatMap[y][x - 1].getChecked()) && (map[y][x - 1] < unknown)) {
+            if ((heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown)) {
                 heatMap[y][x - 1].setChecked(true);
                 heatMap[y][x - 1].setDir(HeatmapTile.Dir.EAST);
                 waveFront.add(heatMap[y][x - 1]);
@@ -246,28 +247,28 @@ public class Pathfinder {
         int x = start.getX();
 
         //Check north
-        if ( ((y + 1) < map.length) && (!heatMap[y + 1][x].getChecked()) && (map[y + 1][x] < unknown) && (neighborUnknown(y + 1, x, map)) ) {
+        if ( ((y + 1) < map.length) && (heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown) && (neighborUnknown(y + 1, x, map)) ) {
             heatMap[y + 1][x].setChecked(true);
             iterator.add(heatMap[y + 1][x]);
             return;
         }
 
         //Check East
-        if ( ((x + 1) < map[0].length) && (!heatMap[y][x + 1].getChecked()) && (map[y][x + 1] < unknown) && (neighborUnknown(y, x + 1, map)) ) {
+        if ( ((x + 1) < map[0].length) && (heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown) && (neighborUnknown(y, x + 1, map)) ) {
             heatMap[y][x + 1].setChecked(true);
             iterator.add(heatMap[y][x + 1]);
             return;
         }
 
         //Check South
-        if ( ((y - 1) >= 0) && (!heatMap[y - 1][x].getChecked()) && (map[y - 1][x] < unknown) && (neighborUnknown(y - 1, x, map)) ) {
+        if ( ((y - 1) >= 0) && (heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown) && (neighborUnknown(y - 1, x, map)) ) {
             heatMap[y - 1][x].setChecked(true);
             iterator.add(heatMap[y - 1][x]);
             return;
         }
 
         //Check West
-        if ( ((x - 1) >= 0) && (!heatMap[y][x - 1].getChecked()) && (map[y][x - 1] < unknown) && (neighborUnknown(y, x - 1, map)) ) {
+        if ( ((x - 1) >= 0) && (heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown) && (neighborUnknown(y, x - 1, map)) ) {
             heatMap[y][x - 1].setChecked(true);
             iterator.add(heatMap[y][x - 1]);
         }
@@ -355,12 +356,12 @@ public class Pathfinder {
 
     //Computes X-value (middle off grid) out of grids X number
     private double grid2x(int column) {
-        return (column * tileWidth + x_min);
+        return (column * tileWidth + (tileWidth / 2) + x_min);
     }
 
     //Computes Y-value (middle of grid) out of grids Y number
     private double grid2y(int row) {
-        return (row * tileHeight + y_min);
+        return (row * tileHeight + (tileHeight / 2) + y_min);
     }
 
 }

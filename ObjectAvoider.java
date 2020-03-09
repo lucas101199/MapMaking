@@ -13,21 +13,14 @@ public class ObjectAvoider {
      * @return True if there was an obstacle to avoid, false if not.
      * @throws Exception
      */
-    public boolean avoidObject(double[] echoes, double heading) throws Exception {
+    public boolean avoidObject(double[] echoes) throws Exception {
         //Check 25 degrees left and right of the robot for obstacles
         for (int i = 110; i < 160; i++) {
                 if (echoes[i] < distance) {
-                    //turning the robot around 180 degrees
-                    double opposite = heading - 180;
-                    dr.setLinearSpeed(0);
-                    dr.setAngularSpeed(10);
+                    dr.setAngularSpeed(Math.PI * 0.5);
                     comm.putRequest(dr);
-                    //check if robot is turned with margin of 10 degrees
-                    while ( !((opposite - 5 < heading) && ((opposite + 5) > heading)) ) {
-                        sleep(20);
-                        heading = lr.getHeadingAngle();
-                    }
-                    dr.setAngularSpeed(0);
+                    sleep(2000);
+                    dr.setAngularSpeed(Math.PI * 0);
                     comm.putRequest(dr);
                     return true;
                 }

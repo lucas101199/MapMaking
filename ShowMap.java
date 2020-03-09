@@ -34,6 +34,7 @@ public class ShowMap extends JPanel {
     private double cell_size = 0.2; //20cm
     private int x_min, y_min, x_max, y_max;
     private float p_occupied, p_empty = (float) 0.5;
+    private boolean first_time = true;
 
     /**
      * Constructor for ShowMap
@@ -73,13 +74,17 @@ public class ShowMap extends JPanel {
         y_max = coord[3];
 
         // creating a gray BufferedImage
-        map = new BufferedImage(gridWidth, gridHeight, BufferedImage.TYPE_INT_RGB);
-        Color c = new Color(127, 127, 127);
-        for (int col = 0; col < gridWidth; col++) {
-            for (int row = 0; row < gridHeight; row++) {
-                map.setRGB(col, row, c.getRGB());
+        if (first_time) {
+            first_time = false;
+            map = new BufferedImage(gridWidth, gridHeight, BufferedImage.TYPE_INT_RGB);
+            Color c = new Color(127, 127, 127);
+            for (int col = 0; col < gridWidth; col++) {
+                for (int row = 0; row < gridHeight; row++) {
+                    map.setRGB(col, row, c.getRGB());
+                }
             }
         }
+
         // creating a thread for saving the map as an image
         task = new Thread() {
             public void run() {
@@ -120,7 +125,7 @@ public class ShowMap extends JPanel {
                 // if value is <0 draw a gray pixel
                 // else mapping the value between 0.0 - 1.0 where 1.0 is black
                 // and 0.0 is white
-                if (value < 0) {
+                if (value <= 0) {
                     c = new Color(0.5f, 0.5f, 0.5f);
                 } else {
                     value = Math.abs(value - 1);
@@ -139,7 +144,6 @@ public class ShowMap extends JPanel {
         Graphics g = map.getGraphics();
         g.setColor(Color.RED);
         g.fillRect(position_robot[0], position_robot[1] ,robotSize, robotSize);
-        this.updateUI();
 
         // update the gui
         this.updateUI();

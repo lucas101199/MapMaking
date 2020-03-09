@@ -19,6 +19,11 @@ public class Point
         this.y = y;
     }
 
+    public Point(int[] pos){
+        this.x = pos[0];
+        this.y = pos[1];
+    }
+
     public void setX(double x) {
         this.x = x;
     }

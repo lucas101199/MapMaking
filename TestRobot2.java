@@ -21,6 +21,7 @@ public class TestRobot2 {
     public boolean first_time = true;
     public float[][] grid;
     public float[][] image_grid;
+    public ShowMap map;
     /**
      * Create a robot connected to host "host" at port "port"
      *
@@ -76,8 +77,8 @@ public class TestRobot2 {
         System.out.println("Response code " + rc);
 
         // Ask for the laser beam angles
-        double angle = 0;
-        double[] echoes = new double[0];
+        double angle;
+        double[] echoes;
         robotcomm.getResponse(lpr);
         robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
@@ -86,16 +87,22 @@ public class TestRobot2 {
         angle = lr.getHeadingAngle();
         echoes = ler.getEchoes();
 
-        grid = createMap(lr, angle, echoes, angles); // create an example map
+        int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
+        int nRows = (int) (Math.abs(y_max - y_min) / 0.2);
+        boolean showGUI = true; // set this to false if you run in putty
+        map = new ShowMap(nRows, nCols, showGUI, coord);
+
+        createMap(lr, angle, echoes, angles); // create an example map
         dr.setAngularSpeed(Math.PI * 0.5);
         robotcomm.putRequest(dr);
-        sleep(500);
+        sleep(2000);
         dr.setAngularSpeed(Math.PI * 0);
         robotcomm.putRequest(dr);
+        sleep(5000);
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
 
-        for (;;) {
+        while (Stop_robot(grid)) {
             robotcomm.getResponse(lpr);
             robotcomm.getResponse(lr);
             robotcomm.getResponse(ler);
@@ -107,9 +114,7 @@ public class TestRobot2 {
 
             //Compute A Path
             double[] rob_pos = lr.getPosition();
-            double[] rob_pos_grid = new double[2];
-            rob_pos_grid[0] = rob_pos[0] + Math.abs(x_min);
-            rob_pos_grid[1] = rob_pos[1] + Math.abs(y_min);
+            int[] rob_pos_grid = map.xy_to_rc(rob_pos[0], rob_pos[1]);
 
             Point start = new Point(rob_pos_grid);
 
@@ -144,9 +149,9 @@ public class TestRobot2 {
 
         }
 
-        /*System.out.println("Stop robot");
+        System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
-        System.out.println("Response code " + rc);*/
+        System.out.println("Response code " + rc);
     }
 
     /**
@@ -157,28 +162,23 @@ public class TestRobot2 {
                            double[] echoes, double[] angles) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / 0.2);
-        System.out.println("nCols: " + nCols);
         int nRows = (int) (Math.abs(y_max - y_min) / 0.2);
-
-        boolean showGUI = true; // set this to false if you run in putty
-        ShowMap map = new ShowMap(nRows, nCols, showGUI, coord);
 
         /* Creating a grid with 0.5 */
         if (first_time) {
+            first_time = false;
             grid = new float[nRows][nCols];
             image_grid = new float[nRows][nCols];
-            for (int i = nRows - 1; i > 0; i--) {
-                for (int j = 0; j < nCols; j++) {
+            for (int i = nRows - 1; i >= 0; i--) {
+                for (int j = 0; j < nCols - 1; j++) {
                     grid[i][j] = (float) 0.5;
                     image_grid[i][j] = (float) 0.5;
-
                 }
-                first_time = false;
             }
         }
 
         // Position of the robot in the grid (red dot)
-        double[] position_robot = localizationResponse.getPosition();
+        double[] position_robot =  localizationResponse.getPosition();
         int robotCol = (int) Math.round(position_robot[0]); //y
         int robotRow = (int) Math.round(position_robot[1]); //x
 
@@ -194,25 +194,17 @@ public class TestRobot2 {
             int[] robot = map.xy_to_rc(robotCol, robotRow);
             int[] obstacle_image = map.xy_to_rc(x_end_line, y_end_line_image);
 
-            if (x_end_line > x_min && x_end_line < x_max && y_end_line > y_min && y_end_line < y_max) {
-                colorGrid(grid, obstacle[0], obstacle[1], robot[0], robot[1], map);
-            }
-            if (x_end_line > x_min && x_end_line < x_max && y_end_line_image > y_min && y_end_line_image < y_max) {
-                colorGrid(image_grid, obstacle_image[0], obstacle_image[1], robot[0], robot[1], map);
-            }
-        }
+            colorGrid(grid, obstacle[0], obstacle[1], robot[0], robot[1], map);
+            colorGrid(image_grid, obstacle_image[0], obstacle_image[1], robot[0], robot[1], map);
 
-        System.out.println(" tt = " + tt * (180 / Math.PI));
-        System.out.println(" tt = " + angles[135] * (180 / Math.PI));
+        }
 
         // Update the grid
         map.updateMap(image_grid, robotRow, robotCol, echoes, angles);
+
         System.out.println("grid x length: " + grid[0].length);
         return grid;
     }
-
-
-
 
     //Color the grid using bayes
     public void colorGrid(float[][] grid, int x, int y, int start_x, int start_y, ShowMap map) {
@@ -221,20 +213,22 @@ public class TestRobot2 {
         Point point_robot = new Point(pos_robot_xy[0], pos_robot_xy[1]);
 
         for (Point point : visited_points) {
-            float prob_cell = grid[(int)point.y][(int)point.y];
             double[] point_rayon_xy = map.rc_to_xy((int) point.x, (int) point.y);
-            Point new_point = new Point(point_rayon_xy[0], point_rayon_xy[1]);
-            double distance_robot_cell = point_robot.getDistance(new_point);
-            float prob_occ;
-            //if point is in region 2
-            if(point != visited_points.getLast()) {
-                prob_occ = map.Bayes(distance_robot_cell);
+            if (point_rayon_xy[0] > x_min && point_rayon_xy[0] < x_max && point_rayon_xy[1] > y_min && point_rayon_xy[1] < y_max) {
+                float prob_cell = grid[(int)point.y][(int)point.y];
+                Point new_point = new Point(point_rayon_xy[0], point_rayon_xy[1]);
+                double distance_robot_cell = point_robot.getDistance(new_point);
+                float prob_occ;
+                //if point is in region 2
+                if(point != visited_points.getLast()) {
+                    prob_occ = map.Bayes(distance_robot_cell);
+                }
+                else { //point is in region 1
+                    prob_occ = map.Bayes_R1(distance_robot_cell);
+                }
+                float prob_occ_recur = map.recursive_bayes(prob_occ, prob_cell);
+                grid[(int) point.y][(int) point.x] = prob_occ_recur;
             }
-            else { //point is in region 1
-                prob_occ = map.Bayes_R1(distance_robot_cell);
-            }
-            float prob_occ_recur = map.recursive_bayes(prob_occ, prob_cell);
-            grid[(int) point.y][(int) point.x] = prob_occ_recur;
         }
     }
 
@@ -263,5 +257,22 @@ public class TestRobot2 {
         } catch (InterruptedException ie) {
             throw new RuntimeException(ie);
         }
+    }
+
+    public boolean Stop_robot(float[][] grid) {
+        double percentage_map = 0;
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == 0.5) {
+                    percentage_map += 1;
+                }
+            }
+        }
+        boolean stop = true;
+        double percentage = percentage_map / (grid.length * grid[0].length);
+        if (percentage < 0.1) {
+            stop = false;
+        }
+        return stop;
     }
 }

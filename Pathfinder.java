@@ -55,7 +55,7 @@ public class Pathfinder {
 
     /**
      * Resets the <code>HeatmapTiles</code> in the <code>heatMap</code> to their initial values
-     * @param map the regula grid that represents the world
+     * @param map the regular grid that represents the world
      */
     private void resetHeatmap(float[][] map) {
         for (int i = 0; i < map.length; i++ ) {
@@ -76,8 +76,8 @@ public class Pathfinder {
         Queue<HeatmapTile> waveFront = new LinkedList<>();
 
         //Setting tile from the start point on checked and adding it to the queue
-        heatMap[y2Grid(s.getY())][x2Grid(s.getX())].setChecked(true);
-        waveFront.add(heatMap[y2Grid(s.getY())][x2Grid(s.getX())]);
+        heatMap[(int)(s.getY())][(int)(s.getX())].setChecked(true);
+        waveFront.add(heatMap[(int)(s.getY())][(int)(s.getX())]);
         //while the there are still unexplored tiles in the queue and the goal tile is not reached yet the heat expands
         //to the adjacent tiles and those are added to the queue
         int cnt = 0;
@@ -165,8 +165,8 @@ public class Pathfinder {
     private Path createPath(Point s, Point g) {
         int x = x2Grid(g.getX());
         int y = y2Grid(g.getY());
-        int goal_x = x2Grid(s.getX());
-        int goal_y = y2Grid(s.getY());
+        int goal_x = (int)(s.getX());
+        int goal_y = (int)(s.getY());
         Stack<HeatmapTile> heatStack = new Stack<>();
 
         while (((goal_x != x) || (goal_y != y))) {
@@ -343,26 +343,24 @@ public class Pathfinder {
         return false;
 }
 
-
-
     //Computes grids X number out of X-value
     private int x2Grid(double xValue) {
-        return (int)(xValue / tileWidth);
+        return (int)((xValue - x_min) / tileWidth);
     }
 
     //Computes grids Y number out of Y-value
     private int y2Grid(double yValue) {
-        return (int)(yValue / tileHeight);
+        return (int)((yValue - y_min) / tileHeight);
     }
 
     //Computes X-value (middle off grid) out of grids X number
     private double grid2x(int column) {
-        return (column * tileWidth + (tileWidth / 2));
+        return (column * tileWidth + x_min);
     }
 
     //Computes Y-value (middle of grid) out of grids Y number
     private double grid2y(int row) {
-        return (row * tileHeight + (tileHeight / 2));
+        return (row * tileHeight + y_min);
     }
 
 }

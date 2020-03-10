@@ -116,8 +116,8 @@ public class ShowMap extends JPanel {
      *            is the current x-position (column) of the robot translated to
      *            column in the grid.
      */
-    public synchronized void updateMap(float[][] grid, int robotRow,
-                                       int robotCol, double[] echoes, double[] angles) {
+    public synchronized void updateMap(float[][] grid, double robotRow,
+                                       double robotCol) {
         Color c;
         for (int row = 0; row < grid.length; row++) {
             for (int col = 0; col < grid[0].length; col++) {
@@ -138,7 +138,8 @@ public class ShowMap extends JPanel {
 
         //get the position of the robot in the grid
         int[] position_robot = xy_to_rc(robotCol, robotRow);
-
+        System.out.println(position_robot[0]);
+        System.out.println(position_robot[1]);
         // drawing a filled red Rectangle for the robot. Rectangle size is
         // 5x5
         Graphics g = map.getGraphics();
@@ -217,17 +218,20 @@ public class ShowMap extends JPanel {
         if (dy < 0) dy = -dy;
 
         if (dx > dy) {
-            pdx = incx;     pdy = 0;
-            es = dy;        el = dx;
-        }
-        else {
-            pdx = 0;        pdy = incy;
-            es = dx;        el = dy;
+            pdx = incx;
+            pdy = 0;
+            es = dy;
+            el = dx;
+        } else {
+            pdx = 0;
+            pdy = incy;
+            es = dx;
+            el = dy;
         }
 
         x = xstart;
         y = ystart;
-        err = el/2;
+        err = el / 2;
 
         for (int t = 0; t < el; t++) {
             err -= es;
@@ -235,15 +239,17 @@ public class ShowMap extends JPanel {
                 err += el;
                 x += incx;
                 y += incy;
-            }
-            else {
+            } else {
                 x += pdx;
                 y += pdy;
             }
-            visited_point.add(new Point(x,y));
+            if (x < 350 && x > 0 && y < 300 && y > 0) {
+                visited_point.add(new Point(x, y));
+            }
         }
         return visited_point;
     }
+
 
     /**
      * Calculate the probability that the cell is empty using bayes's rule
@@ -255,7 +261,7 @@ public class ShowMap extends JPanel {
      *
      */
     public float Bayes(double rayon) {
-        float p_empty_bayes = (float) ((40-rayon) / 40 + 1) / 2;
+        float p_empty_bayes = (float) ((20-rayon) / 20 + 1) / 2;
         return 1 - p_empty_bayes;
     }
 
@@ -265,6 +271,6 @@ public class ShowMap extends JPanel {
 
     //proba occupied in region 1
     public float Bayes_R1(double rayon) {
-        return (float) (((40-rayon)/40 + 1) / 2 * 0.98);
+        return (float) (((20-rayon)/20 + 1) / 2 * 0.98);
     }
 }

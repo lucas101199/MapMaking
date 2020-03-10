@@ -92,7 +92,7 @@ public class RobotCommunication {
      */
     public Response getResponse(Response r) throws Exception {
         URL url = new URL(host + ":" + port + r.getPath());
-        System.out.println(url + " (this annoying message comes from RobotCommunication)");
+        //System.out.println(url + " (this annoying message comes from RobotCommunication)");
 
         // open a connection to the web server and then get the resulting data
         URLConnection connection = url.openConnection();
@@ -101,7 +101,7 @@ public class RobotCommunication {
         // map it to a Java Map
         Map<String, Object> data = mapper.readValue(in, Map.class);
         r.setData(data);
-        System.out.println(data);
+        //System.out.println(data);
         in.close();
 
         return r;

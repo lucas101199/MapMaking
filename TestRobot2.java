@@ -103,12 +103,12 @@ public class TestRobot2 {
             echoes = ler.getEchoes();
 
             grid = createMap(lr, echoes, angles); // create an example map
-            dr.setAngularSpeed(Math.PI * 0.3);
+            /*dr.setAngularSpeed(Math.PI * 0.5);
             robotcomm.putRequest(dr);
             sleep(2000);
             dr.setAngularSpeed(Math.PI * 0);
             robotcomm.putRequest(dr);
-            sleep(5000);
+            sleep(5000);*/
 
             robotcomm.getResponse(lpr);
             robotcomm.getResponse(lr);
@@ -127,7 +127,9 @@ public class TestRobot2 {
 
             Pathfinder scout = new Pathfinder(0.2, 0.2, (double) x_min, (double) y_min, grid);
             Path path = scout.findPath(start, grid);
-            System.out.println("Pathlength: " + path.path.length);
+            for (int i = 0; i < path.path.length; i++) {
+                System.out.println("x: " + path.path[i].getX() + " y: " + path.path[i].getY() + " ");
+            }
             /*if (path.path.length == 1) {
                 for (int i = 0; i < grid.length; i++) {
                     System.out.println("\n");
@@ -137,13 +139,13 @@ public class TestRobot2 {
                 }
             }*/
 
-            sleep(10000);
+            sleep(1000);
             //Follow the Path
             PathFollower follower = new PathFollower(path);
             System.out.print("Pathfollowing begins");
 
             Point pos = new Point(rob_pos_grid);
-            while ( (!path.pathFinished()) || (path.getNextPoint().getDistance(pos) < PathFollower.FINAL_DISTANCE) ) {
+            while (!path.pathFinished()) {
                 robotcomm.getResponse(lpr);
                 robotcomm.getResponse(lr);
                 robotcomm.getResponse(ler);
@@ -151,6 +153,7 @@ public class TestRobot2 {
                 angle = lr.getHeadingAngle();
                 echoes = ler.getEchoes();
 
+                follower.step(pos, lr);
 
                 if (objectAvoider.avoidObject(echoes)) { //if obstacle encounter stop the robot
                     break;
@@ -160,7 +163,7 @@ public class TestRobot2 {
                 pos.setX(lr.getPosition()[0]);
                 pos.setY(lr.getPosition()[1]);
 
-                follower.step(pos, lr);
+
                 follower.sleep(30);
             }
             System.out.println("Path finished!");

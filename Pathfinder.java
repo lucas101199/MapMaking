@@ -191,7 +191,7 @@ public class Pathfinder {
         int i = 0;
         Point[] path = new Point[heatStack.size()];
         while (!heatStack.empty()) {
-            path[i] = new Point(grid2x(heatStack.peek().getX()) - Math.abs(x_min), grid2y(heatStack.peek().getY()) - Math.abs(y_min));
+            path[i] = new Point(grid2x(heatStack.peek().getX()), grid2y(heatStack.peek().getY()));
             heatStack.pop();
             i++;
         }

@@ -21,6 +21,8 @@ public class PathFollower {
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
     void step(Point pos, LocalizationResponse lr) throws Exception {
         Point goalPoint = path.getGoalPoint(pos, lookDistance);
+        System.out.println("NextPoint x: " + goalPoint.getX());
+        System.out.println("NextPoint y " + goalPoint.getY());
         double curvature = getCurvature(goalPoint, pos, lr);
         driveRequest.setLinearSpeed(speed);
         driveRequest.setAngularSpeed(speed * curvature);

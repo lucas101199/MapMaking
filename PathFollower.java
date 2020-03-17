@@ -4,12 +4,12 @@
 public class PathFollower {
     public static double FINAL_DISTANCE = 0.2;
     public Point pos;
-    public double speed = 0.5; //0.5 is safe, 1.0 is fine for not overly curvy paths
-    public double lookDistance = 1; //1 is safe, 1.5 rather risky, below 0.5 does not work
-    public Path path;
-    private RobotCommunication comm = new RobotCommunication("http://127.0.0.1", 50000);
-    private DifferentialDriveRequest driveRequest = new DifferentialDriveRequest();
-    private LocalizationResponse locResponse = new LocalizationResponse();
+    public  double speed = 0.5; //0.5 is safe, 1.0 is fine for not overly curvy paths
+    public  double lookDistance = 1.0; //1 is safe, 1.5 rather risky, below 0.5 does not work
+    public  Path path;
+    private  RobotCommunication comm = new RobotCommunication("http://127.0.0.1", 50000);
+    private  DifferentialDriveRequest driveRequest = new DifferentialDriveRequest();
+    private  LocalizationResponse locResponse = new LocalizationResponse();
 
     PathFollower(Path path) {
         this.path = path;
@@ -17,26 +17,13 @@ public class PathFollower {
 
 
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
-    void run() throws Exception {
-        comm.getResponse(locResponse);
-        pos = getPosition();
-        while ( (!path.pathFinished()) || (path.getNextPoint().getDistance(pos) < FINAL_DISTANCE) ) {
-            step();
-            sleep(30);
-        }
-        stopRobot();
-        System.out.println("Path done!");
-    }
 
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
-    void step() throws Exception {
-        comm.getResponse(locResponse);
-        pos = getPosition();
-        Point goalPoint = path.getGoalPoint(pos,lookDistance);
-        System.out.println("Goalpoint X: " + goalPoint.getX() + "  Y: " + goalPoint.getY());
-        double curvature = getCurvature(goalPoint, pos);
+    void step(Point pos, LocalizationResponse lr) throws Exception {
+        Point goalPoint = path.getGoalPoint(pos, lookDistance);
+        double curvature = getCurvature(goalPoint, pos, lr);
         driveRequest.setLinearSpeed(speed);
-        driveRequest.setAngularSpeed(speed*curvature);
+        driveRequest.setAngularSpeed(speed * curvature);
         comm.putRequest(driveRequest);
     }
 
@@ -55,8 +42,8 @@ public class PathFollower {
      * @param pos The current position of the robot.
      * @return A <code>Point</code> with the x and y value beeing in robot coordinates.
      */
-    Point worldToRobot(Point p, Point pos) {
-        double angle = locResponse.getHeadingAngle();
+    Point worldToRobot(Point p, Point pos, LocalizationResponse lr) {
+        double angle = lr.getHeadingAngle();
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         double x = (p.x-pos.x) * cos + (p.y-pos.y) * sin;
@@ -87,8 +74,8 @@ public class PathFollower {
      * @param pos Robot position.
      * @return The curvature
      */
-    double getCurvature(Point p, Point pos) {
-        Point wtR = worldToRobot(p,pos);
+    double getCurvature(Point p, Point pos, LocalizationResponse lr) {
+        Point wtR = worldToRobot(p,pos, lr);
         return 2 * wtR.y / p.getSquaredDistance(pos);
     }
 
@@ -108,7 +95,7 @@ public class PathFollower {
         comm.putRequest(driveRequest);
     }
 
-    static void sleep(long ms) {
+    void sleep(long ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException ie) {

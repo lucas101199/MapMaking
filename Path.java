@@ -12,14 +12,16 @@ public class Path
    }
 
     public Point getGoalPoint(Point pos, double targetDistance) {
+       Point goal = pos;
         while(!pathFinished() && path[nextPoint].getDistance(pos) < targetDistance) {
+            System.out.println();
             nextPoint++;
         }
         return getNextPoint();
     }
 
     public boolean pathFinished() {
-        return nextPoint+1 >= path.length;
+        return nextPoint + 1 >= path.length;
     }
 
     public Point getNextPoint() {

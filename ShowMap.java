@@ -31,7 +31,8 @@ public class ShowMap extends JPanel {
     private int robotSize = 2;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
-    private double cell_size = 0.2; //20cm
+    private double cell_size; //20cm
+    private double R;
     private int x_min, y_min, x_max, y_max;
     private float p_occupied, p_empty = (float) 0.5;
     private boolean first_time = true;
@@ -47,9 +48,11 @@ public class ShowMap extends JPanel {
      *            if false, no map will be shown on screen. Good if you are
      *            using Putty for example
      */
-    public ShowMap(int gridHeight, int gridWidth, boolean showGUI, int[] coord) {
+    public ShowMap(int gridHeight, int gridWidth, boolean showGUI, int[] coord, double cell_size, double R) {
         super(true);
         this.showGUI = showGUI;
+        this.cell_size = cell_size;
+        this.R = R;
         imageHeight = scale * gridHeight;
         imageWidth = scale * gridWidth;
         if (showGUI) {
@@ -244,7 +247,7 @@ public class ShowMap extends JPanel {
                 x += pdx;
                 y += pdy;
             }
-            if (x < (x_max - x_min) / cell_size && x > 0 && y < (y_max - y_min) / cell_size && y > 0) {
+            if (x < (x_max - x_min) / cell_size && x >= 0 && y < (y_max - y_min) / cell_size && y >= 0) {
                 visited_point.add(new Point(x, y));
             }
         }
@@ -262,7 +265,7 @@ public class ShowMap extends JPanel {
      *
      */
     public float Bayes(double rayon) {
-        float p_empty_bayes = (float) ((10-rayon) / 10 + 1) / 2;
+        float p_empty_bayes = (float) ((R-rayon) / R + 1) / 2;
         return 1 - p_empty_bayes;
     }
 
@@ -272,7 +275,7 @@ public class ShowMap extends JPanel {
 
     //proba occupied in region 1
     public float Bayes_R1(double rayon) {
-        return (float) ((( (10-rayon) / 10 + 1) / 2) * 0.98);
+        return (float) ((( (R-rayon) / R + 1) / 2) * 0.98);
     }
 
 

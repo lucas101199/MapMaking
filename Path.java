@@ -6,15 +6,16 @@ public class Path
 {
    public Point[] path;
    public int nextPoint = 0;
+   public boolean first = true;
 
    public Path(Point[] wayPoints) {
        path = wayPoints;
    }
 
-    public Point getGoalPoint(Point pos, double targetDistance) {
+
+   public Point getGoalPoint(Point pos, double targetDistance) {
        Point goal = pos;
         while(!pathFinished() && path[nextPoint].getDistance(pos) < targetDistance) {
-            System.out.println();
             nextPoint++;
         }
         return getNextPoint();

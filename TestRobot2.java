@@ -17,7 +17,8 @@ public class TestRobot2 {
     public static int y_min;
     public static int x_max;
     public static int y_max;
-    private double cell_size = 0.2;
+    private double cell_size = 0.1;
+    private double R = 4.0;
     public static int[] coord;
     public boolean first_time = true;
     public float[][] grid;
@@ -47,8 +48,8 @@ public class TestRobot2 {
         System.out.println("Creating Robot");
         TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
         //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);*
-        x_min = -30;
-        y_min = -40;
+        x_min = -10;
+        y_min = -20;
         x_max = 40;
         y_max = 20;
         coord = new int[]{x_min, y_min, x_max, y_max};
@@ -80,21 +81,51 @@ public class TestRobot2 {
         // Ask for the laser beam angles
         double angle;
         double[] echoes;
-        robotcomm.getResponse(lpr);
-        robotcomm.getResponse(lr);
-        robotcomm.getResponse(ler);
+        double[] angles;
+        double[] robotPos;
+        double[] laserPos;
 
-        double[] angles = getLaserAngles(lpr);
-        angle = lr.getHeadingAngle();
-        echoes = ler.getEchoes();
 
         int nCols = (int) (Math.abs(x_max - x_min) / cell_size);
         int nRows = (int) (Math.abs(y_max - y_min) / cell_size);
         boolean showGUI = true; // set this to false if you run in putty
-        map = new ShowMap(nRows, nCols, showGUI, coord);
+        map = new ShowMap(nRows, nCols, showGUI, coord, cell_size, R);
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
 
+
+
+        robotcomm.getResponse(lpr);
+        robotcomm.getResponse(lr);
+        robotcomm.getResponse(ler);
+
+        angles = getLaserAngles(lpr);
+        angle = lr.getHeadingAngle();
+        echoes = ler.getEchoes();
+        robotPos = lr.getPosition();
+        laserPos = lpr.getPosition();
+        grid = createMap(robotPos, echoes, angles, angle); // create an example map
+
+        //Turn around
+        dr.setAngularSpeed(Math.PI * 0.5);
+        robotcomm.putRequest(dr);
+        sleep(2000);
+        dr.setLinearSpeed(0);
+        dr.setAngularSpeed(Math.PI * 0);
+        robotcomm.putRequest(dr);
+
+
+        robotcomm.getResponse(lpr);
+        robotcomm.getResponse(lr);
+        robotcomm.getResponse(ler);
+        angles = getLaserAngles(lpr);
+        angle = lr.getHeadingAngle();
+        echoes = ler.getEchoes();
+        robotPos = lr.getPosition();
+        laserPos = lpr.getPosition();
+        grid = createMap(robotPos, echoes, angles, angle); // create an example map
+
+        Pathfinder scout = new Pathfinder(cell_size, cell_size, (double) x_min, (double) y_min, grid);
         while (true) {
             robotcomm.getResponse(lpr);
             robotcomm.getResponse(lr);
@@ -102,68 +133,56 @@ public class TestRobot2 {
             angles = getLaserAngles(lpr);
             angle = lr.getHeadingAngle();
             echoes = ler.getEchoes();
+            robotPos = lr.getPosition();
 
-            grid = createMap(lr, echoes, angles); // create an example map
-            /*dr.setAngularSpeed(Math.PI * 0.5);
-            robotcomm.putRequest(dr);
-            sleep(2000);
-            dr.setAngularSpeed(Math.PI * 0);
-            robotcomm.putRequest(dr);
-            sleep(5000);
+            grid = createMap(robotPos, echoes, angles, angle); // create an example map
 
-            robotcomm.getResponse(lpr);
-            robotcomm.getResponse(lr);
-            robotcomm.getResponse(ler);
-            angles = getLaserAngles(lpr);
-            angle = lr.getHeadingAngle();
-            echoes = ler.getEchoes();
-
-            grid = createMap(lr, echoes, angles); // create an example map*/
 
             //Compute A Path
-            double[] rob_pos = lr.getPosition();
-            int[] rob_pos_grid = map.xy_to_rc(rob_pos[0], rob_pos[1]);
+            int[] rob_pos_grid = map.xy_to_rc(robotPos[0], robotPos[1]);
 
             Point start = new Point(rob_pos_grid);
 
-            Pathfinder scout = new Pathfinder(cell_size, cell_size, (double) x_min, (double) y_min, grid);
-            Path path = scout.findPath(map, start, grid);
+            Path path = scout.findPath(start, grid);
             System.out.println("Pathlength: " + path.path.length);
-            /*if (path.path.length == 1) {
-                for (int i = 0; i < grid.length; i++) {
-                    System.out.println("\n");
-                    for (int j = 0; j < grid[0].length; j++) {
-                        System.out.print(grid[i][j] +  " ");
-                    }
-                }
-            }*/
 
-            sleep(1000);
+            map.showGoal(grid, scout.pub_goal.getX(), scout.pub_goal.getY());
+
+            //sleep(1000);
             //Follow the Path
             PathFollower follower = new PathFollower(path);
-            System.out.print("Pathfollowing begins");
+            System.out.println("Pathfollowing begins");
 
-            Point pos = new Point(rob_pos_grid);
+            Point pos = new Point(robotPos);
             while ( (!path.pathFinished()) ) {
-                System.out.println("Step");
+                /*dr.setLinearSpeed(0);
+                dr.setAngularSpeed(0);
+                robotcomm.putRequest(dr);
+                sleep(200);*/
                 robotcomm.getResponse(lpr);
                 robotcomm.getResponse(lr);
                 robotcomm.getResponse(ler);
                 angles = getLaserAngles(lpr);
                 angle = lr.getHeadingAngle();
                 echoes = ler.getEchoes();
-
-                follower.step(pos, lr);
+                robotPos = lr.getPosition();
 
                 if (objectAvoider.avoidObject(echoes)) { //if obstacle encounter stop the robot
+                    grid = createMap(robotPos, echoes, angles, angle);
+                    map.showGoal(grid, scout.pub_goal.getX(), scout.pub_goal.getY());
                     System.out.println("Object Avoidance");
                     break;
                 }
 
-                grid = createMap(lr, echoes, angles); // create an example map
-                map.showGoal(grid, path.path[path.path.length - 1].getX(), path.path[path.path.length - 1].getY());
+                follower.step(pos, lr, angle);
+
+
+
+                grid = createMap(robotPos, echoes, angles, angle); // create an example map
+                map.showGoal(grid, scout.pub_goal.getX(), scout.pub_goal.getY());
                 pos.setX(lr.getPosition()[0]);
                 pos.setY(lr.getPosition()[1]);
+
 
 
                 follower.sleep(30);
@@ -172,7 +191,7 @@ public class TestRobot2 {
             dr.setAngularSpeed(Math.PI * 0);
             dr.setLinearSpeed(0);
             robotcomm.putRequest(dr);
-            sleep(5000);
+            sleep(3000);
         }
 
         /*System.out.println("Stop robot");
@@ -184,8 +203,8 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
-    private float[][] createMap(LocalizationResponse localizationResponse,
-                           double[] echoes, double[] angles) {
+    private float[][] createMap(double[] robotPosition,
+                           double[] echoes, double[] angles, double heading_angle) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / cell_size);
         int nRows = (int) (Math.abs(y_max - y_min) / cell_size);
@@ -196,49 +215,53 @@ public class TestRobot2 {
             grid = new float[nRows][nCols];
             image_grid = new float[nRows][nCols];
             for (int i = nRows - 1; i >= 0; i--) {
-                for (int j = 0; j < nCols - 1; j++) {
+                for (int j = 0; j < nCols; j++) {
                     grid[i][j] = (float) 0.5;
                     image_grid[i][j] = (float) 0.5;
                 }
             }
         }
 
+        double[] laserPosition = new double[2];
+        laserPosition[0] = robotPosition[0] + (0.15 *  Math.cos(heading_angle));
+        laserPosition[1] = robotPosition[1] + (0.15 *  Math.sin(heading_angle));
 
 
-        // Position of the robot in the grid (red dot)
-        double[] position_robot =  localizationResponse.getPosition();
-        double robotCol = position_robot[0];
-        double robotRow = position_robot[1];
 
-        double tt = localizationResponse.getHeadingAngle(); //angle in radians
 
         for (int i = 0; i < echoes.length; i++) {
 
-            double y_end_line = robotRow + (echoes[i] * Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle)) grid without minus for path planning
-            double x_end_line = robotCol + (echoes[i] *  Math.cos(angles[i] + tt)); // x2 = x1 + (lenght * cos(angle)) angle in radians
-            double y_end_line_image = robotRow + (echoes[i] * Math.sin(angles[i] + tt)); // y2 = y1 + (lenght * sin(angle)) grid with minus
+            double[] obstacle = new double[2];
+            double[] obstacle_image = new double[2];
 
-            int[] obstacle = map.xy_to_rc(x_end_line, y_end_line);
-            int[] robot = map.xy_to_rc(robotCol, robotRow);
-            int[] obstacle_image = map.xy_to_rc(x_end_line, y_end_line_image);
 
-            colorGrid(grid, echoes[i], obstacle[0], obstacle[1], robot[0], robot[1], map);
-            colorGrid(image_grid, echoes[i], obstacle_image[0], obstacle_image[1], robot[0], robot[1], map);
+            obstacle[1] = laserPosition[1] + (echoes[i] * Math.sin(angles[i] + heading_angle)); // y2 = y1 + (lenght * sin(angle)) grid without minus for path planning
+            obstacle[0] = laserPosition[0] + (echoes[i] *  Math.cos(angles[i] + heading_angle)); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            obstacle_image[0] = laserPosition[0] + (echoes[i] *  Math.cos(angles[i] + heading_angle)); // x2 = x1 + (lenght * cos(angle)) angle in radians
+            obstacle_image[1] = laserPosition[1] + (echoes[i] * Math.sin(angles[i] + heading_angle)); // y2 = y1 + (lenght * sin(angle)) grid with minus
 
-            //growObstacles(cell_size, cell_size);
+
+            colorGrid(grid, echoes[i], obstacle, laserPosition, map);
+            colorGrid(image_grid, echoes[i], obstacle_image, laserPosition, map);
+
+
         }
 
+        //int[] robPosGrid = map.xy_to_rc(robotPosition[0], robotPosition[1]);
+        //float[][] grownObstacles = growObstacles(new Point(robPosGrid), grid);
+
         // Update the grid
-        map.updateMap(grid, robotRow, robotCol);
+        map.updateMap(grid, robotPosition[1], robotPosition[0]);
 
         return grid;
     }
 
     //Color the grid using bayes
-    public void colorGrid(float[][] grid, double echo, int x, int y, int start_x, int start_y, ShowMap map) {
-        LinkedList<Point> visited_points = map.drawBresenhamLine(start_x, start_y, x, y);
-        double[] pos_robot_xy = map.rc_to_xy(start_x, start_y);
-        Point point_robot = new Point(pos_robot_xy[0], pos_robot_xy[1]);
+    public void colorGrid(float[][] grid, double echo, double[] obstacle, double[] laserPos, ShowMap map) {
+        int[] gridObstacle = map.xy_to_rc(obstacle[0], obstacle[1]);
+        int[] gridLaserPos = map.xy_to_rc(laserPos[0], laserPos[1]);
+        LinkedList<Point> visited_points = map.drawBresenhamLine(gridLaserPos[0], gridLaserPos[1], gridObstacle[0], gridObstacle[1]);
+        Point point_robot = new Point(laserPos[0], laserPos[1]);
 
         for (Point point : visited_points) {
             double[] point_rayon_xy = map.rc_to_xy((int) point.x, (int) point.y);
@@ -250,15 +273,15 @@ public class TestRobot2 {
             //check if the echo is in 10m range
             //System.out.println("Distance to Object: " + echo);
             //System.out.println("Distance to Cell: " + distance_robot_cell);
-            if (echo < 10.0) {
+            if (echo < R) {
                 //System.out.println("Within R");
                 //Check if cell is in region 2
-                if (distance_robot_cell < (echo - 0.11)) {
+                if (distance_robot_cell < (echo - 0.05)) {
                     //System.out.println("Cell in Region 2");
                     prob_occ = map.Bayes(distance_robot_cell);
                     prob_occ_recur = map.recursive_bayes(prob_occ, prob_cell);
                 } else {
-                    if (distance_robot_cell > (echo + 0.11)) {
+                    if (distance_robot_cell > (echo + 0.05)) {
                         //System.out.println("Cell in Region 3");
                         // cell in region 3
                         prob_occ_recur = prob_cell;
@@ -271,7 +294,7 @@ public class TestRobot2 {
                 }
             } else {
                 //The echo is grater than R so every cell within distance R is free (Region 2)
-                if (distance_robot_cell < 10) {
+                if (distance_robot_cell < R) {
                     //System.out.println("Echo grater R");
                     prob_occ = map.Bayes(distance_robot_cell);
                     prob_occ_recur = map.recursive_bayes(prob_occ, prob_cell);
@@ -328,36 +351,163 @@ public class TestRobot2 {
         return stop;
     }
 
-    private void growObstacles(double robot_width, double robot_height) {
+
+
+
+
+
+
+
+
+
+
+/*
+    //Testing Code
+    private float[][] growObstacles(Point robPos, float[][] grid) {
+
+        float[][] map = new float[grid.length][grid[0].length];
         for (int i = 0; i < grid.length; i++) {
-            //Grow obstacles in negative x direction
-            for (int j = 0; j < grid[0].length - 1; j++) { //-1 because the last cell has no cell to look at
-                if (grid[i][j + 1] > 0.5) {
-                    grid[i][j] = grid[i][j + 1];
-                }
+            for (int j = 0; j < grid[0].length; j++) {
+                map[i][j] = grid[i][j];
             }
-            //Grow obstacles in positive x direction
-            for (int j = grid[0].length - 1; j >= 1; j--) { //-1 because the last cell has no cell to look at
-                if (grid[i][j - 1] > 0.5) {
-                    grid[i][j] = grid[i][j - 1];
+        }
+
+        HeatmapTile[][] heatMap = new HeatmapTile[map.length][map[0].length];
+        for (int i = 0; i < map.length; i++ ) {
+            for (int j = 0; j < map[0].length; j++) {
+                heatMap[i][j] = new HeatmapTile(j, i);
+            }
+        }
+
+        LinkedList<HeatmapTile> tileList = new LinkedList<>();
+
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] > 0.5) {
+                    tileList.add(heatMap[i][j]);
+
                 }
             }
         }
 
-        for (int i = 0; i < grid[0].length; i++) {
-            //Grow obstacles in negative y direction
-            for (int j = 0; j < grid.length - 1; j++) { //-1 because the last cell has no cell to look at
-                if (grid[j + 1][i] > 0.5) {
-                    grid[j][i] = grid[j + 1][i];
+        for (HeatmapTile tile : tileList) {
+            int y = tile.getY();
+            int x = tile.getX();
+
+            int yNorth = y2Grid(grid2y(y) + 0.5);
+            int ySouth = y2Grid(grid2y(y) - 0.5);
+
+            int xEast = x2Grid(grid2x(x) + 0.5);
+            int xWest = x2Grid(grid2x(x) - 0.5);
+
+            growOnNeighbors(heatMap, robPos, map, x, y, yNorth, ySouth, xEast, xWest);
+        }
+
+        return map;
+    }
+
+    private void growOnNeighbors(HeatmapTile[][] heatMap, Point robPos,  float[][] map, int x, int y, int yNorth, int ySouth, int xEast, int xWest) {
+        int i;
+        int j;
+        boolean escape;
+        //Check North
+        i = y;
+        escape = false;
+        while (i <= yNorth && i < map.length) {
+            //Check if the robot is on this tile
+            if (i == robPos.getY() && x == robPos.getX()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[i][x].setChecked(true);
+            } else {
+                if (!heatMap[i][x].getChecked()) {
+                    map[i][x] = map[y][x];
                 }
             }
-            //Grow obstacles in positive y direction
-            for (int j = grid.length - 1; j >= 1; j--) { //-1 because the last cell has no cell to look at
-                if (grid[j - 1][i] > 0.5) {
-                    grid[j][i] = grid[j - 1][i];
+            i++;
+        }
+
+        //Check South
+        i = y;
+        escape = false;
+        while (i >= ySouth && i >= 0) {
+            //Check if the robot is on this tile
+            if (i == robPos.getY() && x == robPos.getX()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[i][x].setChecked(true);
+            } else {
+                if (!heatMap[i][x].getChecked()) {
+                    map[i][x] = map[y][x];
                 }
             }
+            i--;
+        }
+
+        //Check East
+        j = x;
+        escape = false;
+        while (j <= xEast && j < map[0].length) {
+            //Check if the robot is on this tile
+            if (j == robPos.getX() && y == robPos.getY()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[y][j].setChecked(true);
+            } else {
+                if (!heatMap[y][j].getChecked()) {
+                    map[y][j] = map[y][x];
+                }
+            }
+            j++;
+        }
+
+
+        //Check East
+        j = x;
+        escape = false;
+        while (j >= xWest && j >= 0) {
+            //Check if the robot is on this tile
+            if (j == robPos.getX() && y == robPos.getY()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[y][j].setChecked(true);
+            } else {
+                if (!heatMap[y][j].getChecked()) {
+                    map[y][j] = map[y][x];
+                }
+            }
+            j--;
         }
     }
 
+    //Computes grids X number out of X-value
+    private int x2Grid(double xValue) {
+        return (int)((xValue - x_min) / cell_size);
+    }
+
+    //Computes grids Y number out of Y-value
+    private int y2Grid(double yValue) {
+        return (int)((yValue - y_min) / cell_size);
+    }
+
+    //Computes X-value (middle off grid) out of grids X number
+    private double grid2x(int column) {
+        return (column * cell_size + (cell_size / 2) + x_min);
+    }
+
+    //Computes Y-value (middle of grid) out of grids Y number
+    private double grid2y(int row) {
+        return (row * cell_size + (cell_size / 2) + y_min);
+    }
+
+
+*/
 }

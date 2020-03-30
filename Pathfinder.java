@@ -17,6 +17,7 @@ public class Pathfinder {
     private LinkedList<HeatmapTile> unreachable = new LinkedList<>();
     private LinkedList<HeatmapTile> lastFrontline = new LinkedList<>();
     private boolean lastFailed = false;
+    public boolean finished = false;
 
 
 
@@ -67,6 +68,10 @@ public class Pathfinder {
             lastFailed = false;
         }
         Point goal = getGoal(start, map);
+        if (finished) {
+            Point[] self = {start};
+            return new Path(self);
+        }
         pub_goal = goal;
 
         System.out.println("Goal x: " + goal.getX());
@@ -142,6 +147,17 @@ public class Pathfinder {
      * @param y The y value of the HeatmapTile whose neighbors should be explored
      */
     private void expandWavefront(Queue<HeatmapTile> waveFront, float[][] map, int x, int y) {
+        //Check West
+        if (((x - 1) >= 0) && (y < map.length) && (y >= 0)){
+            if ((heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown)) {
+                heatMap[y][x - 1].setChecked(true);
+                heatMap[y][x - 1].setDir(HeatmapTile.Dir.EAST);
+                waveFront.add(heatMap[y][x - 1]);
+            } else {
+                heatMap[y][x - 1].setChecked(true);
+            }
+        }
+
         //Check North
         if (((y + 1) < map.length) && (x < map[0].length) && (x >= 0)) {
             if ((heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown)) {
@@ -175,16 +191,6 @@ public class Pathfinder {
             }
         }
 
-        //Check West
-        if (((x - 1) >= 0) && (y < map.length) && (y >= 0)){
-            if ((heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown)) {
-                heatMap[y][x - 1].setChecked(true);
-                heatMap[y][x - 1].setDir(HeatmapTile.Dir.EAST);
-                waveFront.add(heatMap[y][x - 1]);
-            } else {
-                heatMap[y][x - 1].setChecked(true);
-            }
-        }
     }
 
 
@@ -242,6 +248,10 @@ public class Pathfinder {
     private boolean frontlineStartMapboundry(int i, int j, float[][] map) {
         return (map[i][j] < unknown) &&  (onTheEdge(i, j, map)) && (neighborUnknown(i, j, map))  && (!heatMap[i][j].getChecked());
     }
+
+    private boolean frontlineStartOpenspace(int i, int j, float[][] map) {
+        return (map[i][j] < unknown) && (neighborUnknown(i, j, map))  && (!heatMap[i][j].getChecked());
+    }
     /**
      * Computes a frontier based goal point by saving all tiles forming one frontier in a list and saving all those frontier lists in another list.
      * Then the frontiers are compared by size and the middlepoint of the longest frontier is the goalpoint.
@@ -259,7 +269,7 @@ public class Pathfinder {
 
         for (int i = 0; i < map.length; i ++) {
             for (int j = 0; j < map[0].length; j++) {
-                if ( frontlineStartObstacle(i, j, map) || frontlineStartMapboundry(i, j, map) ) {
+                if ( frontlineStartObstacle(i, j, map) || frontlineStartMapboundry(i, j, map) || frontlineStartOpenspace(i, j, map) ) {
                     LinkedList<HeatmapTile> frontline = new LinkedList<>();
                     heatMap[i][j].setChecked(true);
                     frontline.add(heatMap[i][j]);
@@ -275,7 +285,8 @@ public class Pathfinder {
 
         if (frontiers.size() == 0) {
             System.out.println("No frontiers!");
-            return new Point(grid2x((int) (start.getX() + 20)), grid2y((int) start.getY()));
+            finished = true;
+            return new Point(grid2x((int) (start.getX())), grid2y((int) start.getY()));
         }
         int longest = 0;
         int max_length = 0;

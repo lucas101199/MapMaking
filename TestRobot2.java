@@ -85,9 +85,11 @@ public class TestRobot2 {
         double[] angles;
         double[] robotPos;
         double[] laserPos;
-        
+
+
         int nCols = (int) (Math.abs(x_max - x_min) / cell_size);
         int nRows = (int) (Math.abs(y_max - y_min) / cell_size);
+        boolean showGUI = true; // set this to false if you run in putty
         map = new ShowMap(nRows, nCols, showGUI, coord, cell_size, R);
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
@@ -123,7 +125,7 @@ public class TestRobot2 {
 
         Pathfinder scout = new Pathfinder(cell_size, cell_size, (double) x_min, (double) y_min, grid);
         boolean end_of_map = true;
-        while (end_of_map) {
+        while (!scout.finished) {
 
             //stop if the robot has discover 90% of the map
             end_of_map = Stop_robot(grid);
@@ -190,11 +192,10 @@ public class TestRobot2 {
             robotcomm.putRequest(dr);
             sleep(3000);
         }
-
-        System.out.println("Stop robot");
-        rc = robotcomm.putRequest(dr);
-        System.out.println("Response code " + rc);
+        sleep(5000);
+        System.out.println("Map creation finished!");
     }
+
 
     /**
      * A simple example of how to use the ShowMap class that creates a map from
@@ -348,163 +349,4 @@ public class TestRobot2 {
         return stop;
     }
 
-
-
-
-
-
-
-
-
-
-
-/*
-    //Testing Code
-    private float[][] growObstacles(Point robPos, float[][] grid) {
-
-        float[][] map = new float[grid.length][grid[0].length];
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[0].length; j++) {
-                map[i][j] = grid[i][j];
-            }
-        }
-
-        HeatmapTile[][] heatMap = new HeatmapTile[map.length][map[0].length];
-        for (int i = 0; i < map.length; i++ ) {
-            for (int j = 0; j < map[0].length; j++) {
-                heatMap[i][j] = new HeatmapTile(j, i);
-            }
-        }
-
-        LinkedList<HeatmapTile> tileList = new LinkedList<>();
-
-        for (int i = 0; i < map.length; i++) {
-            for (int j = 0; j < map[0].length; j++) {
-                if (map[i][j] > 0.5) {
-                    tileList.add(heatMap[i][j]);
-
-                }
-            }
-        }
-
-        for (HeatmapTile tile : tileList) {
-            int y = tile.getY();
-            int x = tile.getX();
-
-            int yNorth = y2Grid(grid2y(y) + 0.5);
-            int ySouth = y2Grid(grid2y(y) - 0.5);
-
-            int xEast = x2Grid(grid2x(x) + 0.5);
-            int xWest = x2Grid(grid2x(x) - 0.5);
-
-            growOnNeighbors(heatMap, robPos, map, x, y, yNorth, ySouth, xEast, xWest);
-        }
-
-        return map;
-    }
-
-    private void growOnNeighbors(HeatmapTile[][] heatMap, Point robPos,  float[][] map, int x, int y, int yNorth, int ySouth, int xEast, int xWest) {
-        int i;
-        int j;
-        boolean escape;
-        //Check North
-        i = y;
-        escape = false;
-        while (i <= yNorth && i < map.length) {
-            //Check if the robot is on this tile
-            if (i == robPos.getY() && x == robPos.getX()) {
-                escape = true;
-            }
-            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
-            if (escape) {
-                heatMap[i][x].setChecked(true);
-            } else {
-                if (!heatMap[i][x].getChecked()) {
-                    map[i][x] = map[y][x];
-                }
-            }
-            i++;
-        }
-
-        //Check South
-        i = y;
-        escape = false;
-        while (i >= ySouth && i >= 0) {
-            //Check if the robot is on this tile
-            if (i == robPos.getY() && x == robPos.getX()) {
-                escape = true;
-            }
-            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
-            if (escape) {
-                heatMap[i][x].setChecked(true);
-            } else {
-                if (!heatMap[i][x].getChecked()) {
-                    map[i][x] = map[y][x];
-                }
-            }
-            i--;
-        }
-
-        //Check East
-        j = x;
-        escape = false;
-        while (j <= xEast && j < map[0].length) {
-            //Check if the robot is on this tile
-            if (j == robPos.getX() && y == robPos.getY()) {
-                escape = true;
-            }
-            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
-            if (escape) {
-                heatMap[y][j].setChecked(true);
-            } else {
-                if (!heatMap[y][j].getChecked()) {
-                    map[y][j] = map[y][x];
-                }
-            }
-            j++;
-        }
-
-
-        //Check East
-        j = x;
-        escape = false;
-        while (j >= xWest && j >= 0) {
-            //Check if the robot is on this tile
-            if (j == robPos.getX() && y == robPos.getY()) {
-                escape = true;
-            }
-            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
-            if (escape) {
-                heatMap[y][j].setChecked(true);
-            } else {
-                if (!heatMap[y][j].getChecked()) {
-                    map[y][j] = map[y][x];
-                }
-            }
-            j--;
-        }
-    }
-
-    //Computes grids X number out of X-value
-    private int x2Grid(double xValue) {
-        return (int)((xValue - x_min) / cell_size);
-    }
-
-    //Computes grids Y number out of Y-value
-    private int y2Grid(double yValue) {
-        return (int)((yValue - y_min) / cell_size);
-    }
-
-    //Computes X-value (middle off grid) out of grids X number
-    private double grid2x(int column) {
-        return (column * cell_size + (cell_size / 2) + x_min);
-    }
-
-    //Computes Y-value (middle of grid) out of grids Y number
-    private double grid2y(int row) {
-        return (row * cell_size + (cell_size / 2) + y_min);
-    }
-
-
-*/
 }

@@ -78,9 +78,6 @@ public class PathFollower {
         }
     }
 
-    static void normalizeRadian(double r) {
-        r += r>0 ? 0 : 2*Math.PI;
-    }
 
     private Point getPosition() {
         double[] position = locResponse.getPosition();

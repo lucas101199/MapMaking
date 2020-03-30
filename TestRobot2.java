@@ -93,8 +93,6 @@ public class TestRobot2 {
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
 
-
-
         robotcomm.getResponse(lpr);
         robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
@@ -114,7 +112,6 @@ public class TestRobot2 {
         dr.setAngularSpeed(Math.PI * 0);
         robotcomm.putRequest(dr);
 
-
         robotcomm.getResponse(lpr);
         robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
@@ -126,7 +123,12 @@ public class TestRobot2 {
         grid = createMap(robotPos, echoes, angles, angle); // create an example map
 
         Pathfinder scout = new Pathfinder(cell_size, cell_size, (double) x_min, (double) y_min, grid);
-        while (true) {
+        boolean end_of_map = true;
+        while (end_of_map) {
+
+            //stop if the robot has discover 90% of the map
+            end_of_map = Stop_robot(grid);
+
             robotcomm.getResponse(lpr);
             robotcomm.getResponse(lr);
             robotcomm.getResponse(ler);
@@ -176,14 +178,10 @@ public class TestRobot2 {
 
                 follower.step(pos, lr, angle);
 
-
-
                 grid = createMap(robotPos, echoes, angles, angle); // create an example map
                 map.showGoal(grid, scout.pub_goal.getX(), scout.pub_goal.getY());
                 pos.setX(lr.getPosition()[0]);
                 pos.setY(lr.getPosition()[1]);
-
-
 
                 follower.sleep(30);
             }
@@ -194,9 +192,9 @@ public class TestRobot2 {
             sleep(3000);
         }
 
-        /*System.out.println("Stop robot");
+        System.out.println("Stop robot");
         rc = robotcomm.putRequest(dr);
-        System.out.println("Response code " + rc);*/
+        System.out.println("Response code " + rc);
     }
 
     /**

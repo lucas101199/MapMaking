@@ -1,3 +1,5 @@
+import sun.awt.image.ImageWatched;
+
 import java.util.*;
 
 /**
@@ -12,6 +14,15 @@ public class Pathfinder {
     private static float unknown = 0.5f;
     private double x_min;
     private double y_min;
+    private LinkedList<HeatmapTile> unreachable = new LinkedList<>();
+    private LinkedList<HeatmapTile> lastFrontline = new LinkedList<>();
+    private boolean lastFailed = false;
+    public boolean finished = false;
+
+
+
+    //Testing reasons
+    public Point pub_goal;
 
 
     public Pathfinder(double width, double height, double x_min, double y_min, float[][] map) {
@@ -32,23 +43,50 @@ public class Pathfinder {
      * Takes position of the robot and the regular grid. Computes a goal point on frontier based method and creates a path
      * how to get there and returns it.
      * @param start The position of the robot in world coordinates.
-     * @param map The regular grid of the world.
+     * @param grid The regular grid of the world.
      * @return Array of points that mark the path to the goal point.
      */
-    public Path findPath(Point start, float[][] map) {
+    public Path findPath(Point start, float[][] grid) {
+
+        float[][] map = new float[grid.length][grid[0].length];
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                map[i][j] = grid[i][j];
+            }
+        }
+
 
         resetHeatmap(map);
-        Point goal = getGoal(map);
+        map = growObstacles(start, map);
+
+        resetHeatmap(map);
+        if (lastFailed) {
+            System.out.println("Last creation failed!");
+            for (int i = 0; i < lastFrontline.size(); i++){
+                unreachable.add(lastFrontline.get(i));
+            }
+            lastFailed = false;
+        }
+        Point goal = getGoal(start, map);
+        if (finished) {
+            Point[] self = {start};
+            return new Path(self);
+        }
+        pub_goal = goal;
+
+        System.out.println("Goal x: " + goal.getX());
+        System.out.println("Goal y " + goal.getY());
 
         resetHeatmap(map);
         heatWave(start, goal, map);
 
-
+        System.out.println("Value of Goal: " + grid[y2Grid(goal.getY())][x2Grid(goal.getX())]);
         if (heatMap[y2Grid(goal.getY())][x2Grid(goal.getX())].getChecked()) {
             System.out.println("Path creation starts");
             return createPath(start, goal);
         }
         System.out.println("Error in Path creation!");
+        lastFailed = true;
         Point[] self = {start};
         return new Path(self);
     }
@@ -82,10 +120,11 @@ public class Pathfinder {
         //to the adjacent tiles and those are added to the queue
         int cnt = 0;
         while (waveFront.size() != 0) {
+            cnt++;
             if ( (waveFront.peek().getX() != x2Grid(g.getX())) || (waveFront.peek().getY() != y2Grid(g.getY())) ) {
                 expandWavefront(waveFront, map, waveFront.peek().getX(), waveFront.peek().getY());
                 waveFront.remove();
-                cnt++;
+
             } else {
                 heatMap[waveFront.peek().getY()][waveFront.peek().getX()].setChecked(true);
                 waveFront.peek().setChecked(true);
@@ -93,6 +132,7 @@ public class Pathfinder {
                 break;
             }
         }
+        System.out.println("Tiles visited: " + cnt);
     }
 
     /**
@@ -107,6 +147,17 @@ public class Pathfinder {
      * @param y The y value of the HeatmapTile whose neighbors should be explored
      */
     private void expandWavefront(Queue<HeatmapTile> waveFront, float[][] map, int x, int y) {
+        //Check West
+        if (((x - 1) >= 0) && (y < map.length) && (y >= 0)){
+            if ((heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown)) {
+                heatMap[y][x - 1].setChecked(true);
+                heatMap[y][x - 1].setDir(HeatmapTile.Dir.EAST);
+                waveFront.add(heatMap[y][x - 1]);
+            } else {
+                heatMap[y][x - 1].setChecked(true);
+            }
+        }
+
         //Check North
         if (((y + 1) < map.length) && (x < map[0].length) && (x >= 0)) {
             if ((heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown)) {
@@ -117,18 +168,7 @@ public class Pathfinder {
                 heatMap[y + 1][x].setChecked(true);
             }
         }
-
-        //Check East
-        if (((x + 1) < map[0].length) && (y < map.length) && (y >= 0)) {
-            if ((heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown)) {
-                heatMap[y][x + 1].setChecked(true);
-                heatMap[y][x + 1].setDir(HeatmapTile.Dir.WEST);
-                waveFront.add(heatMap[y][x + 1]);
-            } else {
-                heatMap[y][x + 1].setChecked(true);
-            }
-        }
-
+      
         //Check South
         if (((y - 1) >= 0) && (x < map[0].length) && (x >= 0)) {
             if ((heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown)) {
@@ -140,16 +180,19 @@ public class Pathfinder {
             }
         }
 
-        //Check West
-        if (((x - 1) >= 0) && (y < map.length) && (y >= 0)){
-            if ((heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown)) {
-                heatMap[y][x - 1].setChecked(true);
-                heatMap[y][x - 1].setDir(HeatmapTile.Dir.EAST);
-                waveFront.add(heatMap[y][x - 1]);
+
+        //Check East
+        if (((x + 1) < map[0].length) && (y < map.length) && (y >= 0)) {
+            if ((heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown)) {
+                heatMap[y][x + 1].setChecked(true);
+                heatMap[y][x + 1].setDir(HeatmapTile.Dir.WEST);
+                waveFront.add(heatMap[y][x + 1]);
+
             } else {
-                heatMap[y][x - 1].setChecked(true);
+                heatMap[y][x + 1].setChecked(true);
             }
         }
+
     }
 
 
@@ -189,8 +232,10 @@ public class Pathfinder {
         }
 
         int i = 0;
-        Point[] path = new Point[heatStack.size()];
-        while (!heatStack.empty()) {
+
+        Point[] path = new Point[heatStack.size() - 1];
+        while (heatStack.size() > 1) {
+
             path[i] = new Point(grid2x(heatStack.peek().getX()), grid2y(heatStack.peek().getY()));
             heatStack.pop();
             i++;
@@ -198,51 +243,254 @@ public class Pathfinder {
         return new Path(path);
     }
 
+
+
+    private boolean frontlineStartObstacle(int i, int j, float[][] map) {
+        return (map[i][j] < unknown) && (neighborObstacle(i, j, map)) && (neighborUnknown(i, j, map)) && (!heatMap[i][j].getChecked());
+    }
+
+    private boolean frontlineStartMapboundry(int i, int j, float[][] map) {
+        return (map[i][j] < unknown) &&  (onTheEdge(i, j, map)) && (neighborUnknown(i, j, map))  && (!heatMap[i][j].getChecked());
+    }
+
+    private boolean frontlineStartOpenspace(int i, int j, float[][] map) {
+        return (map[i][j] < unknown) && (neighborUnknown(i, j, map))  && (!heatMap[i][j].getChecked());
+    }
     /**
      * Computes a frontier based goal point by saving all tiles forming one frontier in a list and saving all those frontier lists in another list.
      * Then the frontiers are compared by size and the middlepoint of the longest frontier is the goalpoint.
      * @param map The grid wich contains the knowledge about the world
      * @return Middlepoint of the longest Frontier.
      */
-    private Point getGoal(float[][] map) {
+    private Point getGoal(Point start, float[][] map) {
+        //Mark unreachable tiles of heatmap as checked
+        for (int i = 0; i < unreachable.size(); i++) {
+            heatMap[unreachable.get(i).getY()][unreachable.get(i).getX()].setChecked(true);
+        }
+
+
         LinkedList<LinkedList<HeatmapTile>> frontiers = new LinkedList<>();
 
         for (int i = 0; i < map.length; i ++) {
             for (int j = 0; j < map[0].length; j++) {
-                if ( (map[i][j] < unknown) && (neighborObstacle(i, j, map)) && (neighborUnknown(i, j, map)) && (!heatMap[i][j].getChecked()) ) {
+
+                if ( frontlineStartObstacle(i, j, map) || frontlineStartMapboundry(i, j, map) || frontlineStartOpenspace(i, j, map) ) {
                     LinkedList<HeatmapTile> frontline = new LinkedList<>();
                     heatMap[i][j].setChecked(true);
                     frontline.add(heatMap[i][j]);
-                    ListIterator<HeatmapTile> iterator = frontline.listIterator();
-                    while (iterator.hasNext()) {
-                        addCandidates(iterator.next(), iterator, map);
+                    int listIterator = 0;
+                    while (listIterator < frontline.size()) {
+                        addCandidates(frontline.get(listIterator), frontline, map);
+                        listIterator++;
+
                     }
                     frontiers.add(frontline);
                 }
             }
         }
 
+        if (frontiers.size() == 0) {
+            System.out.println("No frontiers!");
+            finished = true;
+            return new Point(grid2x((int) (start.getX())), grid2y((int) start.getY()));
+        }
         int longest = 0;
         int max_length = 0;
         for (int i = 0; i < frontiers.size(); i++) {
+            System.out.println("Frontline " + i + " Size: " + frontiers.get(i).size());
             if (frontiers.get(i).size() > max_length) {
                 max_length = frontiers.get(i).size();
                 longest = i;
             }
         }
-
+        //System.out.println("Longest: " + longest);
+        //System.out.println("frontier length: " + frontiers.size());
+        //System.out.println("longest length: " + frontiers.get(longest).size());
+        lastFrontline = frontiers.get(longest);
         HeatmapTile gt = frontiers.get(longest).get(max_length/2);
         return new Point(grid2x(gt.getX()), grid2y(gt.getY()));
     }
 
-    /**
-     * Checks if the neighbors of the <code>start</code> tile have at least one neighbor that is already known. If so the
-     * new <code>HeatmapTile</code> is checked and added to the <code>frontline</code>.
-     * @param start The tile whose neighbors are to be checked.
-     * @param iterator ListIterator for frontier List that contains the tiles the frontier consists of
-     * @param map The grid wich contains the knowledge about the world
-     */
-    private void addCandidates(HeatmapTile start, ListIterator<HeatmapTile> iterator, float[][] map) {
+
+
+    private float[][] growObstacles(Point robPos, float[][] map) {
+
+        LinkedList<HeatmapTile> tileList = new LinkedList<>();
+
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                if (map[i][j] > 0.5) {
+                    tileList.add(heatMap[i][j]);
+                }
+            }
+        }
+
+        for (HeatmapTile tile : tileList) {
+            int y = tile.getY();
+            int x = tile.getX();
+
+            int yNorth = y2Grid(grid2y(y) + 0.6);
+            int ySouth = y2Grid(grid2y(y) - 0.6);
+
+            int xEast = x2Grid(grid2x(x) + 0.6);
+            int xWest = x2Grid(grid2x(x) - 0.6);
+
+            growOnNeighbors(robPos, map, x, y, yNorth, ySouth, xEast, xWest);
+        }
+
+        return map;
+    }
+
+    private void growOnNeighbors(Point robPos,  float[][] map, int x, int y, int yNorth, int ySouth, int xEast, int xWest) {
+        int i;
+        int j;
+        boolean escape;
+        //Check North
+        i = y;
+        escape = false;
+        while (i <= yNorth && i < map.length) {
+            //Check if the robot is on this tile
+            if (i == robPos.getY() && x == robPos.getX()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[i][x].setChecked(true);
+            } else {
+                if (!heatMap[i][x].getChecked()) {
+                    map[i][x] = map[y][x];
+                }
+            }
+            i++;
+        }
+
+        //Check South
+        i = y;
+        escape = false;
+        while (i >= ySouth && i >= 0) {
+            //Check if the robot is on this tile
+            if (i == robPos.getY() && x == robPos.getX()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[i][x].setChecked(true);
+            } else {
+                if (!heatMap[i][x].getChecked()) {
+                    map[i][x] = map[y][x];
+                }
+            }
+            i--;
+        }
+
+        //Check East
+        j = x;
+        escape = false;
+        while (j <= xEast && j < map[0].length) {
+            //Check if the robot is on this tile
+            if (j == robPos.getX() && y == robPos.getY()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[y][j].setChecked(true);
+            } else {
+                if (!heatMap[y][j].getChecked()) {
+                    map[y][j] = map[y][x];
+                }
+            }
+            j++;
+        }
+
+
+        //Check East
+        j = x;
+        escape = false;
+        while (j >= xWest && j >= 0) {
+            //Check if the robot is on this tile
+            if (j == robPos.getX() && y == robPos.getY()) {
+                escape = true;
+            }
+            //Mark the tiles behind the robot, so that they will not be grown on by another obstacle. Keep escape route free!
+            if (escape) {
+                heatMap[y][j].setChecked(true);
+            } else {
+                if (!heatMap[y][j].getChecked()) {
+                    map[y][j] = map[y][x];
+                }
+            }
+            j--;
+        }
+    }
+
+        /*//Check north
+        if ((y + 1 < map.length) && (y + 1 <= yNorth) && (heatMap[y + 1][x].getChecked() == false)) {
+            heatMap[y + 1][x].setChecked(true);
+            map[y + 1][x] = map[y][x];
+            growOnNeighbors(map, x, y + 1, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check northeast
+        if ((y + 1 < map.length) && (x + 1 < map[0].length) && (y + 1 < yNorth) && (x + 1 < xEast) && (heatMap[y + 1][x + 1].getChecked() == false)) {
+            heatMap[y + 1][x + 1].setChecked(true);
+            map[y + 1][x + 1] = map[y][x];
+            growOnNeighbors(map, x + 1, y + 1, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check east
+        if ((x + 1 < map[0].length) && (x + 1 < xEast) && (heatMap[y][x + 1].getChecked() == false)) {
+            heatMap[y][x + 1].setChecked(true);
+            map[y][x + 1] = map[y][x];
+            growOnNeighbors(map, x + 1, y, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check southeast
+        if ((y - 1 >= 0) && (x + 1 < map[0].length) && (y - 1 > ySouth) && (x + 1 < xEast) && (heatMap[y - 1][x + 1].getChecked() == false)) {
+            heatMap[y - 1][x + 1].setChecked(true);
+            map[y - 1][x + 1] = map[y][x];
+            growOnNeighbors(map, x + 1, y - 1, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check South
+        if ((y - 1 >= 0) && (y - 1 > ySouth) && (heatMap[y - 1][x].getChecked() == false)) {
+            heatMap[y - 1][x].setChecked(true);
+            map[y - 1][x] = map[y][x];
+            growOnNeighbors(map, x, y - 1, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check southwest
+        if ((y - 1 >= 0) && (x - 1 >= 0) && (y - 1 > ySouth) && (x - 1 > xWest) && (heatMap[y - 1][x - 1].getChecked() == false)) {
+            heatMap[y - 1][x - 1].setChecked(true);
+            map[y - 1][x - 1] = map[y][x];
+            growOnNeighbors(map, x - 1, y - 1, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check west
+        if ((x - 1 >= 0) && (x - 1 > xWest) && (heatMap[y][x - 1].getChecked() == false)) {
+            heatMap[y][x - 1].setChecked(true);
+            map[y][x - 1] = map[y][x];
+            growOnNeighbors(map, x - 1, y, yNorth, ySouth, xEast, xWest);
+        }
+
+        //Check northwest
+        if ((y + 1 < map.length) && (x - 1 >= 0) && (y + 1 < yNorth) && (x - 1 > xWest) && (heatMap[y + 1][x - 1].getChecked() == false)) {
+            heatMap[y + 1][x - 1].setChecked(true);
+            map[y + 1][x - 1] = map[y][x];
+            growOnNeighbors(map, x - 1, y + 1, yNorth, ySouth, xEast, xWest);
+        }
+    }*/
+
+
+
+
+        /**
+         * Checks if the neighbors of the <code>start</code> tile have at least one neighbor that is already known. If so the
+         * new <code>HeatmapTile</code> is checked and added to the <code>frontline</code>.
+         * @param start The tile whose neighbors are to be checked.
+         * @param frontline the List that contains the grid tiles that form the frontier
+         * @param map The grid wich contains the knowledge about the world
+         */
+    private void addCandidates(HeatmapTile start, LinkedList<HeatmapTile> frontline, float[][] map) {
         int y = start.getY();
         int x = start.getX();
 
@@ -284,28 +532,33 @@ public class Pathfinder {
     private boolean neighborObstacle(int y, int x, float[][] map) {
         //Check north
         if ( ((y + 1) < map.length) && (map[y + 1][x] > unknown) ) {return true;}
-        
-        //Check northeast
-        if ( ((y + 1) < map.length) && ((x + 1) < map[0].length) && (map[y + 1][x + 1] > unknown)) {return true;}
-        
+
         //Check east
         if ( ((x + 1) < map[0].length) && (map[y][x + 1] > unknown) ) {return true;}
-        
-        //Check southeast
-        if ( ((y - 1) >= 0) && ((x + 1) < map[0].length) && (map[y - 1][x + 1] > unknown)) {return true;}
-        
+
         //Check south
         if ( ((y - 1) >= 0) && (map[y - 1][x] > unknown) ) {return true;}
-        
-        //Check southwest
-        if ( ((y - 1) >= 0) && ((x - 1) >= 0) && (map[y - 1][x - 1] > unknown)) {return true;}
-        
+
         //Check west
         if ( ((x - 1) >= 0) && (map[y][x - 1] > unknown) ) {return true;}
-        
-        //Check northwest
-        if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] > unknown)) {return true;}
-        
+
+        return false;
+    }
+
+
+    private boolean onTheEdge(int y, int x, float[][] map) {
+        //Check north
+        if ( ((y + 1) >= map.length) ) {return true;}
+
+        //Check east
+        if ( ((x + 1) >= map[0].length) ) {return true;}
+
+        //Check south
+        if ( ((y - 1) < 0) ) {return true;}
+
+        //Check west
+        if ( ((x - 1) < 0) ) {return true;}
+
         return false;
     }
 
@@ -342,7 +595,9 @@ public class Pathfinder {
         if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] == unknown)) {return true;}
 
         return false;
-}
+
+    }
+
 
     //Computes grids X number out of X-value
     private int x2Grid(double xValue) {

@@ -4,8 +4,10 @@
 public class PathFollower {
     public static double FINAL_DISTANCE = 0.2;
     public Point pos;
-    public  double speed = 0.5; //0.5 is safe, 1.0 is fine for not overly curvy paths
-    public  double lookDistance = 1; //1 is safe, 1.5 rather risky, below 0.5 does not work
+
+    public  double speed = 0.75; //0.5 is safe, 1.0 is fine for not overly curvy paths
+    public  double lookDistance = 1.0; //1 is safe, 1.5 rather risky, below 0.5 does not work
+
     public  Path path;
     private  RobotCommunication comm = new RobotCommunication("http://127.0.0.1", 50000);
     private  DifferentialDriveRequest driveRequest = new DifferentialDriveRequest();
@@ -19,19 +21,66 @@ public class PathFollower {
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
 
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
-    void step(Point pos, LocalizationResponse lr) throws Exception {
+
+    void step(Point pos, LocalizationResponse lr, double angle) throws Exception {
+        Point firstPoint = path.path[0];
         Point goalPoint = path.getGoalPoint(pos, lookDistance);
-        System.out.println("NextPoint x: " + goalPoint.getX());
-        System.out.println("NextPoint y " + goalPoint.getY());
+        double[] real_pos = lr.getPosition();
+
+        if (path.first) {
+            System.out.println("\nDirection check");
+            System.out.println("Angle: " + angle * 180/Math.PI);
+            System.out.println("goal y: " + firstPoint.getY());
+            System.out.println("pos y: " + real_pos[1]);
+            System.out.println("goal x: " + firstPoint.getX());
+            System.out.println("pos x: " + real_pos[0]);
+
+            //Check direction of first point
+            path.first = false;
+            double dx = firstPoint.getX() - real_pos[0];
+            double dy = firstPoint.getY() - real_pos[1];
+
+            //Check if xGoal is farther away
+            if (Math.abs(dx) > Math.abs(dy)) {
+                //Check if goal is in positive x Direction
+                if (Math.signum(dx) == 1) {
+                    turnInDirection(0, angle);
+                } else { //goal is in negative x Direction
+                    turnInDirection(Math.PI, angle);
+                }
+            } else { //yGoal is farther away
+                //Check if goal is in positive y Direction
+                if (Math.signum(dy) == 1) {
+                    turnInDirection(Math.PI / 2, angle);
+                } else { //Goal is in negative y Direction
+                    turnInDirection(-Math.PI / 2, angle);
+                }
+            }
+
+        }
         double curvature = getCurvature(goalPoint, pos, lr);
         driveRequest.setLinearSpeed(speed);
         driveRequest.setAngularSpeed(speed * curvature);
         comm.putRequest(driveRequest);
     }
 
-    static void normalizeRadian(double r) {
-        r += r>0 ? 0 : 2*Math.PI;
+
+    private void turnInDirection(double goal_angle, double angle) throws Exception{
+        if (goal_angle != Math.PI) {
+            while ( !((angle < goal_angle + Math.PI / 4) && (angle > goal_angle - Math.PI / 4)) ) {
+                turnRobot90D();
+                comm.getResponse(locResponse);
+                angle = locResponse.getHeadingAngle();
+            }
+        } else {
+            while (angle < Math.PI / 4 && angle > -Math.PI / 4) {
+                turnRobot90D();
+                comm.getResponse(locResponse);
+                angle = locResponse.getHeadingAngle();
+            }
+        }
     }
+
 
     private Point getPosition() {
         double[] position = locResponse.getPosition();
@@ -103,5 +152,14 @@ public class PathFollower {
         } catch (InterruptedException ie) {
             throw new RuntimeException(ie);
         }
+    }
+
+    private void turnRobot90D() throws Exception {
+        driveRequest.setAngularSpeed(Math.PI * 0.5);
+        driveRequest.setLinearSpeed(0);
+        comm.putRequest(driveRequest);
+        sleep(1000);
+        driveRequest.setAngularSpeed(Math.PI * 0);
+        comm.putRequest(driveRequest);
     }
 }

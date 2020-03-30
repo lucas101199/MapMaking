@@ -20,6 +20,12 @@ public class ObjectAvoider {
                     dr.setAngularSpeed(Math.PI * 0.5);
                     comm.putRequest(dr);
                     sleep(2000);
+                    /*dr.setLinearSpeed(1);
+                    dr.setAngularSpeed(Math.PI * 0);
+                    comm.putRequest(dr);
+                    sleep(1000);*/
+                    dr.setLinearSpeed(0);
+
                     dr.setAngularSpeed(Math.PI * 0);
                     comm.putRequest(dr);
                     return true;

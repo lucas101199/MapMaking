@@ -24,6 +24,7 @@ public class TestRobot2 {
     public float[][] grid;
     public float[][] image_grid;
     public ShowMap map;
+    public static boolean showGUI;
     /**
      * Create a robot connected to host "host" at port "port"
      *
@@ -48,12 +49,12 @@ public class TestRobot2 {
         System.out.println("Creating Robot");
         TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
         //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);*
-        x_min = -10;
-        y_min = -20;
-        x_max = 40;
-        y_max = 20;
+        x_min = Integer.parseInt(args[1]);
+        y_min = Integer.parseInt(args[2]);
+        x_max = Integer.parseInt(args[3]);
+        y_max = Integer.parseInt(args[4]);
         coord = new int[]{x_min, y_min, x_max, y_max};
-
+        showGUI = Boolean.parseBoolean(args[5]);
         robot.run();
         /*try {
             // Check for connection c
@@ -84,11 +85,9 @@ public class TestRobot2 {
         double[] angles;
         double[] robotPos;
         double[] laserPos;
-
-
+        
         int nCols = (int) (Math.abs(x_max - x_min) / cell_size);
         int nRows = (int) (Math.abs(y_max - y_min) / cell_size);
-        boolean showGUI = true; // set this to false if you run in putty
         map = new ShowMap(nRows, nCols, showGUI, coord, cell_size, R);
 
         ObjectAvoider objectAvoider = new ObjectAvoider();

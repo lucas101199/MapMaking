@@ -1,4 +1,5 @@
 
+
 /**
  * This Class resambles a position in the world with x and y coordinate.
  */

@@ -168,7 +168,7 @@ public class Pathfinder {
                 heatMap[y + 1][x].setChecked(true);
             }
         }
-
+      
         //Check South
         if (((y - 1) >= 0) && (x < map[0].length) && (x >= 0)) {
             if ((heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown)) {
@@ -180,12 +180,14 @@ public class Pathfinder {
             }
         }
 
+
         //Check East
         if (((x + 1) < map[0].length) && (y < map.length) && (y >= 0)) {
             if ((heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown)) {
                 heatMap[y][x + 1].setChecked(true);
                 heatMap[y][x + 1].setDir(HeatmapTile.Dir.WEST);
                 waveFront.add(heatMap[y][x + 1]);
+
             } else {
                 heatMap[y][x + 1].setChecked(true);
             }
@@ -230,8 +232,10 @@ public class Pathfinder {
         }
 
         int i = 0;
+
         Point[] path = new Point[heatStack.size() - 1];
         while (heatStack.size() > 1) {
+
             path[i] = new Point(grid2x(heatStack.peek().getX()), grid2y(heatStack.peek().getY()));
             heatStack.pop();
             i++;
@@ -269,6 +273,7 @@ public class Pathfinder {
 
         for (int i = 0; i < map.length; i ++) {
             for (int j = 0; j < map[0].length; j++) {
+
                 if ( frontlineStartObstacle(i, j, map) || frontlineStartMapboundry(i, j, map) || frontlineStartOpenspace(i, j, map) ) {
                     LinkedList<HeatmapTile> frontline = new LinkedList<>();
                     heatMap[i][j].setChecked(true);
@@ -277,6 +282,7 @@ public class Pathfinder {
                     while (listIterator < frontline.size()) {
                         addCandidates(frontline.get(listIterator), frontline, map);
                         listIterator++;
+
                     }
                     frontiers.add(frontline);
                 }
@@ -304,6 +310,7 @@ public class Pathfinder {
         HeatmapTile gt = frontiers.get(longest).get(max_length/2);
         return new Point(grid2x(gt.getX()), grid2y(gt.getY()));
     }
+
 
 
     private float[][] growObstacles(Point robPos, float[][] map) {
@@ -490,28 +497,28 @@ public class Pathfinder {
         //Check north
         if ( ((y + 1) < map.length) && (heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown) && (neighborUnknown(y + 1, x, map)) ) {
             heatMap[y + 1][x].setChecked(true);
-            frontline.add(heatMap[y + 1][x]);
+            iterator.add(heatMap[y + 1][x]);
             return;
         }
 
         //Check East
         if ( ((x + 1) < map[0].length) && (heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown) && (neighborUnknown(y, x + 1, map)) ) {
             heatMap[y][x + 1].setChecked(true);
-            frontline.add(heatMap[y][x + 1]);
+            iterator.add(heatMap[y][x + 1]);
             return;
         }
 
         //Check South
         if ( ((y - 1) >= 0) && (heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown) && (neighborUnknown(y - 1, x, map)) ) {
             heatMap[y - 1][x].setChecked(true);
-            frontline.add(heatMap[y - 1][x]);
+            iterator.add(heatMap[y - 1][x]);
             return;
         }
 
         //Check West
         if ( ((x - 1) >= 0) && (heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown) && (neighborUnknown(y, x - 1, map)) ) {
             heatMap[y][x - 1].setChecked(true);
-            frontline.add(heatMap[y][x - 1]);
+            iterator.add(heatMap[y][x - 1]);
         }
     }
 
@@ -588,7 +595,9 @@ public class Pathfinder {
         if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] == unknown)) {return true;}
 
         return false;
+
     }
+
 
     //Computes grids X number out of X-value
     private int x2Grid(double xValue) {

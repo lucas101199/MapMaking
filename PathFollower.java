@@ -4,8 +4,10 @@
 public class PathFollower {
     public static double FINAL_DISTANCE = 0.2;
     public Point pos;
+
     public  double speed = 0.75; //0.5 is safe, 1.0 is fine for not overly curvy paths
     public  double lookDistance = 1.0; //1 is safe, 1.5 rather risky, below 0.5 does not work
+
     public  Path path;
     private  RobotCommunication comm = new RobotCommunication("http://127.0.0.1", 50000);
     private  DifferentialDriveRequest driveRequest = new DifferentialDriveRequest();
@@ -19,6 +21,7 @@ public class PathFollower {
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
 
     //In the end this code is not necessary hear anymore. Instead it should be in the main method of our robot
+
     void step(Point pos, LocalizationResponse lr, double angle) throws Exception {
         Point firstPoint = path.path[0];
         Point goalPoint = path.getGoalPoint(pos, lookDistance);

@@ -24,7 +24,9 @@ public class TestRobot2 {
     public float[][] grid;
     public float[][] image_grid;
     public ShowMap map;
+
     public static boolean showGUI;
+
     /**
      * Create a robot connected to host "host" at port "port"
      *
@@ -82,6 +84,7 @@ public class TestRobot2 {
         // Ask for the laser beam angles
         double angle;
         double[] echoes;
+
         double[] angles;
         double[] robotPos;
         double[] laserPos;
@@ -94,9 +97,11 @@ public class TestRobot2 {
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
 
+
         robotcomm.getResponse(lpr);
         robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
+
 
         angles = getLaserAngles(lpr);
         angle = lr.getHeadingAngle();
@@ -139,6 +144,9 @@ public class TestRobot2 {
             robotPos = lr.getPosition();
 
             grid = createMap(robotPos, echoes, angles, angle); // create an example map
+
+
+        ObjectAvoider objectAvoider = new ObjectAvoider();
 
 
             //Compute A Path
@@ -194,6 +202,7 @@ public class TestRobot2 {
         }
         sleep(5000);
         System.out.println("Map creation finished!");
+
     }
 
 
@@ -201,11 +210,13 @@ public class TestRobot2 {
      * A simple example of how to use the ShowMap class that creates a map from
      * your grid, update it and save it to file
      */
+
     private float[][] createMap(double[] robotPosition,
                            double[] echoes, double[] angles, double heading_angle) {
         /* use the same no. of rows and cols in map and grid */
         int nCols = (int) (Math.abs(x_max - x_min) / cell_size);
         int nRows = (int) (Math.abs(y_max - y_min) / cell_size);
+
 
         /* Creating a grid with 0.5 */
         if (first_time) {
@@ -213,7 +224,9 @@ public class TestRobot2 {
             grid = new float[nRows][nCols];
             image_grid = new float[nRows][nCols];
             for (int i = nRows - 1; i >= 0; i--) {
+
                 for (int j = 0; j < nCols; j++) {
+
                     grid[i][j] = (float) 0.5;
                     image_grid[i][j] = (float) 0.5;
                 }
@@ -223,6 +236,7 @@ public class TestRobot2 {
         double[] laserPosition = new double[2];
         laserPosition[0] = robotPosition[0] + (0.15 *  Math.cos(heading_angle));
         laserPosition[1] = robotPosition[1] + (0.15 *  Math.sin(heading_angle));
+
 
 
 
@@ -305,6 +319,7 @@ public class TestRobot2 {
         }
     }
 
+
     /**
      * Get corresponding angles to each laser beam
      *
@@ -349,4 +364,21 @@ public class TestRobot2 {
         return stop;
     }
 
+
+    public boolean Stop_robot(float[][] grid) {
+        double percentage_map = 0;
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == 0.5) {
+                    percentage_map += 1;
+                }
+            }
+        }
+        boolean stop = true;
+        double percentage = percentage_map / (grid.length * grid[0].length);
+        if (percentage < 0.1) {
+            stop = false;
+        }
+        return stop;
+    }
 }

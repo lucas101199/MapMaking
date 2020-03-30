@@ -31,8 +31,10 @@ public class ShowMap extends JPanel {
     private int robotSize = 2;
     // if false, no map will be shown on screen
     private boolean showGUI = true;
+
     private double cell_size; //20cm
     private double R;
+
     private int x_min, y_min, x_max, y_max;
     private float p_occupied, p_empty = (float) 0.5;
     private boolean first_time = true;
@@ -48,11 +50,13 @@ public class ShowMap extends JPanel {
      *            if false, no map will be shown on screen. Good if you are
      *            using Putty for example
      */
+
     public ShowMap(int gridHeight, int gridWidth, boolean showGUI, int[] coord, double cell_size, double R) {
         super(true);
         this.showGUI = showGUI;
         this.cell_size = cell_size;
         this.R = R;
+
         imageHeight = scale * gridHeight;
         imageWidth = scale * gridWidth;
         if (showGUI) {
@@ -128,26 +132,34 @@ public class ShowMap extends JPanel {
                 // if value is <0 draw a gray pixel
                 // else mapping the value between 0.0 - 1.0 where 1.0 is black
                 // and 0.0 is white
+
                 if (value < 0) {
+
                     c = new Color(0.5f, 0.5f, 0.5f);
                 } else {
                     value = Math.abs(value - 1);
                     c = new Color(value, value, value);
                 }
                 // setting pixel color for pixel col and row
+
                 map.setRGB(col, grid.length - (row + 1), c.getRGB());
+
             }
         }
 
         //get the position of the robot in the grid
         int[] position_robot = xy_to_rc(robotCol, robotRow);
+
         //System.out.println(position_robot[0]);
         //System.out.println(position_robot[1]);
+
         // drawing a filled red Rectangle for the robot. Rectangle size is
         // 5x5
         Graphics g = map.getGraphics();
         g.setColor(Color.RED);
+
         g.fillRect(position_robot[0], grid.length - (position_robot[1] + 1) ,robotSize, robotSize);
+
 
 
         // update the gui
@@ -198,8 +210,10 @@ public class ShowMap extends JPanel {
     }
 
     public double[] rc_to_xy(int col, int row) {
+
         double x = col * cell_size + cell_size / 2 + x_min;
         double y = row * cell_size + cell_size / 2 + y_min;
+
         return new double[]{x,y};
     }
 
@@ -247,7 +261,9 @@ public class ShowMap extends JPanel {
                 x += pdx;
                 y += pdy;
             }
+
             if (x < (x_max - x_min) / cell_size && x >= 0 && y < (y_max - y_min) / cell_size && y >= 0) {
+
                 visited_point.add(new Point(x, y));
             }
         }
@@ -265,7 +281,9 @@ public class ShowMap extends JPanel {
      *
      */
     public float Bayes(double rayon) {
+
         float p_empty_bayes = (float) ((R-rayon) / R + 1) / 2;
+
         return 1 - p_empty_bayes;
     }
 
@@ -275,6 +293,7 @@ public class ShowMap extends JPanel {
 
     //proba occupied in region 1
     public float Bayes_R1(double rayon) {
+
         return (float) ((( (R-rayon) / R + 1) / 2) * 0.98);
     }
 
@@ -294,6 +313,7 @@ public class ShowMap extends JPanel {
         g.setColor(Color.BLUE);
         g.fillRect(goal_position[0], grid.length - (goal_position[1] + 1), 1, 1);
     }
+
 
 
 

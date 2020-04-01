@@ -49,7 +49,8 @@ public class TestRobot2 {
      */
     public static void main(String[] args) throws Exception {
         System.out.println("Creating Robot");
-        TestRobot2 robot = new TestRobot2("http://127.0.0.1", 50000);
+        String[] url = args[0].split(":");
+        TestRobot2 robot = new TestRobot2(url[0], Integer.parseInt(url[1]));
         //TestRobot2 robot = new TestRobot2("http://bratwurst.cs.umu.se", 50000);*
         x_min = Integer.parseInt(args[1]);
         y_min = Integer.parseInt(args[2]);

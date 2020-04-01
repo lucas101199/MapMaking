@@ -363,22 +363,4 @@ public class TestRobot2 {
         }
         return stop;
     }
-
-
-    public boolean Stop_robot(float[][] grid) {
-        double percentage_map = 0;
-        for (int i = 0; i < grid.length; i++) {
-            for (int j = 0; j < grid[0].length; j++) {
-                if (grid[i][j] == 0.5) {
-                    percentage_map += 1;
-                }
-            }
-        }
-        boolean stop = true;
-        double percentage = percentage_map / (grid.length * grid[0].length);
-        if (percentage < 0.1) {
-            stop = false;
-        }
-        return stop;
-    }
 }

@@ -1,6 +1,6 @@
-import sun.awt.image.ImageWatched;
-
-import java.util.*;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Stack;
 
 /**
  * This class is used to find the next suitable go to point in the world that presumably yields the most exploration
@@ -168,7 +168,7 @@ public class Pathfinder {
                 heatMap[y + 1][x].setChecked(true);
             }
         }
-      
+
         //Check South
         if (((y - 1) >= 0) && (x < map[0].length) && (x >= 0)) {
             if ((heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown)) {
@@ -180,14 +180,12 @@ public class Pathfinder {
             }
         }
 
-
         //Check East
         if (((x + 1) < map[0].length) && (y < map.length) && (y >= 0)) {
             if ((heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown)) {
                 heatMap[y][x + 1].setChecked(true);
                 heatMap[y][x + 1].setDir(HeatmapTile.Dir.WEST);
                 waveFront.add(heatMap[y][x + 1]);
-
             } else {
                 heatMap[y][x + 1].setChecked(true);
             }
@@ -232,10 +230,8 @@ public class Pathfinder {
         }
 
         int i = 0;
-
         Point[] path = new Point[heatStack.size() - 1];
         while (heatStack.size() > 1) {
-
             path[i] = new Point(grid2x(heatStack.peek().getX()), grid2y(heatStack.peek().getY()));
             heatStack.pop();
             i++;
@@ -273,7 +269,6 @@ public class Pathfinder {
 
         for (int i = 0; i < map.length; i ++) {
             for (int j = 0; j < map[0].length; j++) {
-
                 if ( frontlineStartObstacle(i, j, map) || frontlineStartMapboundry(i, j, map) || frontlineStartOpenspace(i, j, map) ) {
                     LinkedList<HeatmapTile> frontline = new LinkedList<>();
                     heatMap[i][j].setChecked(true);
@@ -282,7 +277,6 @@ public class Pathfinder {
                     while (listIterator < frontline.size()) {
                         addCandidates(frontline.get(listIterator), frontline, map);
                         listIterator++;
-
                     }
                     frontiers.add(frontline);
                 }
@@ -310,7 +304,6 @@ public class Pathfinder {
         HeatmapTile gt = frontiers.get(longest).get(max_length/2);
         return new Point(grid2x(gt.getX()), grid2y(gt.getY()));
     }
-
 
 
     private float[][] growObstacles(Point robPos, float[][] map) {
@@ -429,49 +422,42 @@ public class Pathfinder {
             map[y + 1][x] = map[y][x];
             growOnNeighbors(map, x, y + 1, yNorth, ySouth, xEast, xWest);
         }
-
         //Check northeast
         if ((y + 1 < map.length) && (x + 1 < map[0].length) && (y + 1 < yNorth) && (x + 1 < xEast) && (heatMap[y + 1][x + 1].getChecked() == false)) {
             heatMap[y + 1][x + 1].setChecked(true);
             map[y + 1][x + 1] = map[y][x];
             growOnNeighbors(map, x + 1, y + 1, yNorth, ySouth, xEast, xWest);
         }
-
         //Check east
         if ((x + 1 < map[0].length) && (x + 1 < xEast) && (heatMap[y][x + 1].getChecked() == false)) {
             heatMap[y][x + 1].setChecked(true);
             map[y][x + 1] = map[y][x];
             growOnNeighbors(map, x + 1, y, yNorth, ySouth, xEast, xWest);
         }
-
         //Check southeast
         if ((y - 1 >= 0) && (x + 1 < map[0].length) && (y - 1 > ySouth) && (x + 1 < xEast) && (heatMap[y - 1][x + 1].getChecked() == false)) {
             heatMap[y - 1][x + 1].setChecked(true);
             map[y - 1][x + 1] = map[y][x];
             growOnNeighbors(map, x + 1, y - 1, yNorth, ySouth, xEast, xWest);
         }
-
         //Check South
         if ((y - 1 >= 0) && (y - 1 > ySouth) && (heatMap[y - 1][x].getChecked() == false)) {
             heatMap[y - 1][x].setChecked(true);
             map[y - 1][x] = map[y][x];
             growOnNeighbors(map, x, y - 1, yNorth, ySouth, xEast, xWest);
         }
-
         //Check southwest
         if ((y - 1 >= 0) && (x - 1 >= 0) && (y - 1 > ySouth) && (x - 1 > xWest) && (heatMap[y - 1][x - 1].getChecked() == false)) {
             heatMap[y - 1][x - 1].setChecked(true);
             map[y - 1][x - 1] = map[y][x];
             growOnNeighbors(map, x - 1, y - 1, yNorth, ySouth, xEast, xWest);
         }
-
         //Check west
         if ((x - 1 >= 0) && (x - 1 > xWest) && (heatMap[y][x - 1].getChecked() == false)) {
             heatMap[y][x - 1].setChecked(true);
             map[y][x - 1] = map[y][x];
             growOnNeighbors(map, x - 1, y, yNorth, ySouth, xEast, xWest);
         }
-
         //Check northwest
         if ((y + 1 < map.length) && (x - 1 >= 0) && (y + 1 < yNorth) && (x - 1 > xWest) && (heatMap[y + 1][x - 1].getChecked() == false)) {
             heatMap[y + 1][x - 1].setChecked(true);
@@ -483,13 +469,13 @@ public class Pathfinder {
 
 
 
-        /**
-         * Checks if the neighbors of the <code>start</code> tile have at least one neighbor that is already known. If so the
-         * new <code>HeatmapTile</code> is checked and added to the <code>frontline</code>.
-         * @param start The tile whose neighbors are to be checked.
-         * @param frontline the List that contains the grid tiles that form the frontier
-         * @param map The grid wich contains the knowledge about the world
-         */
+    /**
+     * Checks if the neighbors of the <code>start</code> tile have at least one neighbor that is already known. If so the
+     * new <code>HeatmapTile</code> is checked and added to the <code>frontline</code>.
+     * @param start The tile whose neighbors are to be checked.
+     * @param frontline the List that contains the grid tiles that form the frontier
+     * @param map The grid wich contains the knowledge about the world
+     */
     private void addCandidates(HeatmapTile start, LinkedList<HeatmapTile> frontline, float[][] map) {
         int y = start.getY();
         int x = start.getX();
@@ -497,28 +483,28 @@ public class Pathfinder {
         //Check north
         if ( ((y + 1) < map.length) && (heatMap[y + 1][x].getChecked() == false) && (map[y + 1][x] < unknown) && (neighborUnknown(y + 1, x, map)) ) {
             heatMap[y + 1][x].setChecked(true);
-            iterator.add(heatMap[y + 1][x]);
+            frontline.add(heatMap[y + 1][x]);
             return;
         }
 
         //Check East
         if ( ((x + 1) < map[0].length) && (heatMap[y][x + 1].getChecked() == false) && (map[y][x + 1] < unknown) && (neighborUnknown(y, x + 1, map)) ) {
             heatMap[y][x + 1].setChecked(true);
-            iterator.add(heatMap[y][x + 1]);
+            frontline.add(heatMap[y][x + 1]);
             return;
         }
 
         //Check South
         if ( ((y - 1) >= 0) && (heatMap[y - 1][x].getChecked() == false) && (map[y - 1][x] < unknown) && (neighborUnknown(y - 1, x, map)) ) {
             heatMap[y - 1][x].setChecked(true);
-            iterator.add(heatMap[y - 1][x]);
+            frontline.add(heatMap[y - 1][x]);
             return;
         }
 
         //Check West
         if ( ((x - 1) >= 0) && (heatMap[y][x - 1].getChecked() == false) && (map[y][x - 1] < unknown) && (neighborUnknown(y, x - 1, map)) ) {
             heatMap[y][x - 1].setChecked(true);
-            iterator.add(heatMap[y][x - 1]);
+            frontline.add(heatMap[y][x - 1]);
         }
     }
 
@@ -570,34 +556,32 @@ public class Pathfinder {
      * @return
      */
     private boolean neighborUnknown(int y, int x, float[][] map) {
-    //Check north
+        //Check north
         if ( ((y + 1) < map.length) && (map[y + 1][x] == unknown) ) {return true;}
 
-    //Check northeast
+        //Check northeast
         if ( ((y + 1) < map.length) && ((x + 1) < map[0].length) && (map[y + 1][x + 1] == unknown)) {return true;}
 
-    //Check east
+        //Check east
         if ( ((x + 1) < map[0].length) && (map[y][x + 1] == unknown) ) {return true;}
 
-    //Check southeast
+        //Check southeast
         if ( ((y - 1) >= 0) && ((x + 1) < map[0].length) && (map[y - 1][x + 1] == unknown)) {return true;}
 
-    //Check south
+        //Check south
         if ( ((y - 1) >= 0) && (map[y - 1][x] == unknown) ) {return true;}
 
-    //Check southwest
+        //Check southwest
         if ( ((y - 1) >= 0) && ((x - 1) >= 0) && (map[y - 1][x - 1] == unknown)) {return true;}
 
-    //Check west
+        //Check west
         if ( ((x - 1) >= 0) && (map[y][x - 1] == unknown) ) {return true;}
 
-    //Check northwest
+        //Check northwest
         if ( ((y + 1) < map.length) && ((x - 1) >= 0) && (map[y + 1][x - 1] == unknown)) {return true;}
 
         return false;
-
     }
-
 
     //Computes grids X number out of X-value
     private int x2Grid(double xValue) {

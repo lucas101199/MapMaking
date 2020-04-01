@@ -97,11 +97,9 @@ public class TestRobot2 {
 
         ObjectAvoider objectAvoider = new ObjectAvoider();
 
-
         robotcomm.getResponse(lpr);
         robotcomm.getResponse(lr);
         robotcomm.getResponse(ler);
-
 
         angles = getLaserAngles(lpr);
         angle = lr.getHeadingAngle();
@@ -129,11 +127,8 @@ public class TestRobot2 {
         grid = createMap(robotPos, echoes, angles, angle); // create an example map
 
         Pathfinder scout = new Pathfinder(cell_size, cell_size, (double) x_min, (double) y_min, grid);
-        boolean end_of_map = true;
-        while (!scout.finished) {
 
-            //stop if the robot has discover 90% of the map
-            end_of_map = Stop_robot(grid);
+        while (!scout.finished) {
 
             robotcomm.getResponse(lpr);
             robotcomm.getResponse(lr);
@@ -144,10 +139,6 @@ public class TestRobot2 {
             robotPos = lr.getPosition();
 
             grid = createMap(robotPos, echoes, angles, angle); // create an example map
-
-
-        ObjectAvoider objectAvoider = new ObjectAvoider();
-
 
             //Compute A Path
             int[] rob_pos_grid = map.xy_to_rc(robotPos[0], robotPos[1]);
